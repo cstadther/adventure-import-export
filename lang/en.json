@@ -1,0 +1,20 @@
+{
+  "AIE.Scene"         : "Scene",
+  "AIE.Scenes"        : "Scenes",
+  "AIE.Actor"         : "Actor",
+  "AIE.Actors"        : "Actors",
+  "AIE.Item"          : "Item",
+  "AIE.Items"         : "Items",
+  "AIE.JournalEntry"  : "JournalEntry",
+  "AIE.Journals"      : "Journals",
+  "AIE.Rolltable"     : "Roll Table",
+  "AIE.Rolltables"    : "Roll Tables",
+  "AIE.Playlist"      : "Playlist",
+  "AIE.Playlists"     : "Playlists",
+  "AIE.Compendium"    : "Compendium",
+  "AIE.Compendiums"   : "Compendiums",
+  "AIE.AdventureName" : "Adventure Name",
+  "AIE.Export"        : "Export Assets",
+  "AIE.Import"        : "Import Adventure",
+  "AIE.Working"       : "Working"
+}

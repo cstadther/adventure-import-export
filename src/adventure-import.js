@@ -444,22 +444,15 @@ class AdventureModuleImport extends FormApplication {
         break;
       }
 
-      //await pack.importEntity(item);
-
-      // await Helpers.verifyPath("data", `adventures/${name}/${type}`)l
-
-      // await FilePicker.upload("data", `adventures/${name}/${type}`, f, { bucket: null });
-
       currentcount +=1;
       this._updateProgress(totalcount, currentcount, importType);
-
-
     });
 
     
   }
 
   _updateProgress(total, count, type) {
-    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>Working on ${type}...</span>`);
+    const localizedType = `AIE.${type}`;
+    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>${game.i18n.localize("AIE.Working")} (${game.i18n.localize(localizedType)})...</span>`);
   }
 }
