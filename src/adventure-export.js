@@ -235,6 +235,6 @@ class AdventureModuleExport extends FormApplication {
   }
 
   _updateProgress(total, count) {
-    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>Working...</span>`);
+    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>${game.i18n.localize("AIE.Working")}...</span>`);
   }
 }
