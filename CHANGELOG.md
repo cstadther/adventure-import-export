@@ -1,0 +1,1 @@
+* 2020/06/28 - Added localization for English
