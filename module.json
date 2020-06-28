@@ -4,8 +4,8 @@
   "description": "Allows import and export of adventures.",
   "version": "0.0.1",
   "author": "dragkun",
-  "minimumCoreVersion": "0.5.0",
-  "compatibleCoreVersion": "0.6.1",
+  "minimumCoreVersion": "0.6.0",
+  "compatibleCoreVersion": "0.6.4",
   "scripts": [
     "./lib/jszip/jszip-utils.min.js",
     "./lib/jszip/jszip.min.js",
@@ -18,7 +18,7 @@
     "./css/adventure-import-export.css"
   ],
   "packs": [],
-  "url": "",
-  "manifest": "",
+  "url": "https://github.com/cstadther/adventure-import-export",
+  "manifest": "https://raw.githubusercontent.com/cstadther/adventure-import-export/master/module.json",
   "download": ""
 }
