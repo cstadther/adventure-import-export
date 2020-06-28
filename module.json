@@ -1,0 +1,24 @@
+{
+  "name": "adventure-import-export",
+  "title": "Import and Export Adventures",
+  "description": "Allows import and export of adventures.",
+  "version": "0.0.1",
+  "author": "dragkun",
+  "minimumCoreVersion": "0.5.0",
+  "compatibleCoreVersion": "0.6.1",
+  "scripts": [
+    "./lib/jszip/jszip-utils.min.js",
+    "./lib/jszip/jszip.min.js",
+    "./src/common.js",
+    "./src/adventure-export.js",
+    "./src/adventure-import.js",
+    "./src/main.js"
+  ],
+  "styles": [
+    "./css/adventure-import-export.css"
+  ],
+  "packs": [],
+  "url": "",
+  "manifest": "",
+  "download": ""
+}

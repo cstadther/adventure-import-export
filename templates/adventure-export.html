@@ -1,0 +1,104 @@
+<form class="{{cssClass}}" autocomplete="off">
+  <div class="asset-selector">
+    <div class="aie-accordion"><input type="checkbox" value="scenes"/> Scenes</div>
+    <div class="scenes panel grid grid-2col">
+      {{#each data.scenes as |scene id|}}
+        <div>
+          <label>
+            <input type="checkbox" value="{{scene.key}}" data-type="scene"/>
+            <span>{{scene.name}}</span>
+          </label>
+        </div>
+      {{/each}}
+    </div>
+    
+    <div class="aie-accordion"><input type="checkbox" value="actors"/> Actors</div>
+    <div class="panel grid grid-2col">
+      {{#each data.actors as |actor id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{actor.key}}" data-type="actor"/>
+          <span>{{actor.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="aie-accordion"><input type="checkbox" value="items"/> Items</div>
+    <div class="panel grid grid-2col">
+      {{#each data.items as |item id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{item.key}}" data-type="item"/>
+          <span>{{item.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="aie-accordion"><input type="checkbox" value="journals"/> Journals</div>
+    <div class="panel grid grid-2col">
+      {{#each data.journals as |journal id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{journal.key}}" data-type="journal"/>
+          <span>{{journal.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="aie-accordion"><input type="checkbox" value="tables" /> Tables</div>
+    <div class="panel grid grid-2col">
+      {{#each data.tables as |table id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{table.key}}" data-type="table"/>
+          <span>{{table.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>
+    
+    <div class="aie-accordion"><input type="checkbox" value="playlists"/> Playlists</div>
+    <div class="panel grid grid-2col">
+      {{#each data.playlists as |playlist id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{playlist.key}}" data-type="playlist"/>
+          <span>{{playlist.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>  
+
+    <div class="aie-accordion"><input type="checkbox" value="compendiums"/> Compendiums</div>
+    <div class="panel grid grid-2col">
+      {{#each data.compendiums as |compendium id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{compendium.key}}" data-type="compendium"/>
+          <span>{{compendium.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>  
+
+    <div>
+      <h3><input type="text" id="adventure_name" placeholder="Adventure Name" /></h3>
+    </div>
+    <div>
+      <h3><textarea id="adventure_description"></textarea></h3>
+    </div>
+    <div class="import-progress import-hidden">
+      <div class="import-progress-bar" style="width: 0%"></div>
+    </div>
+  </div>
+  
+  <button class="dialog-button">
+    <i class="fas fa-file-export"></i>
+      Export Assets
+  </button>
+  <div class="aie-overlay import-invalid"></div>
+
+</form>
