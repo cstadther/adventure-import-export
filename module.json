@@ -2,7 +2,7 @@
   "name": "adventure-import-export",
   "title": "Import and Export Adventures",
   "description": "Allows import and export of adventures.",
-  "version": "0.0.1",
+  "version": "0.1",
   "author": "dragkun",
   "minimumCoreVersion": "0.6.0",
   "compatibleCoreVersion": "0.6.4",
@@ -20,5 +20,5 @@
   "packs": [],
   "url": "https://github.com/cstadther/adventure-import-export",
   "manifest": "https://raw.githubusercontent.com/cstadther/adventure-import-export/master/module.json",
-  "download": ""
+  "download": "https://github.com/cstadther/adventure-import-export/archive/0.1.zip"
 }
