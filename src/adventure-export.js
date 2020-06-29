@@ -214,7 +214,8 @@ class AdventureModuleExport extends FormApplication {
       id: randomID(),
       name,
       description : $("#adventure_description").val(),
-      system : game.data.system.data.name
+      system : game.data.system.data.name,
+      modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title })
     }
 
     zip.file("adventure.json", Helpers.exportToJSON(descriptor));
