@@ -16,5 +16,6 @@
   "AIE.AdventureName" : "Adventure Name",
   "AIE.Export"        : "Export Assets",
   "AIE.Import"        : "Import Adventure",
-  "AIE.Working"       : "Working"
+  "AIE.Working"       : "Working",
+  "AIE.ActiveModules" : "The following modules were active:"
 }
