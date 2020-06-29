@@ -103,10 +103,7 @@ class AdventureModuleExport extends FormApplication {
     $(".import-progress").toggleClass("import-hidden");
     $(".aie-overlay").toggleClass("import-invalid");
     const name = $("#adventure_name").val().length === 0 ? `Adventure ${(new Date()).getTime()}` : $("#adventure_name").val();
-
     let filename = `${Helpers.sanitizeFilename(name)}.fvttadv`;
-
-
     const controls = $(".aie-exporter-window input[type='checkbox'][data-type]:checked");
 
     var zip = new JSZip();
@@ -117,95 +114,98 @@ class AdventureModuleExport extends FormApplication {
     for(let i = 0; i < controls.length; i+=1) {
       let id = $(controls[i]).val();
       let type = $(controls[i]).data("type");
-      
-      let obj;
-      let data;
-
-      switch(type) {
-        case "scene" :
-          obj = await game.scenes.get(id);
-
-          totalcount += obj.data.tokens.length + obj.data.sounds.length + obj.data.notes.length;
-          await Helpers.asyncForEach(obj.data.tokens, async token => {
-            token.img = await Helpers.exportImage(token.img, type, token._id, zip, "tokenimage");
-          })
-
-          await Helpers.asyncForEach(obj.data.sounds, async sound => {
-            sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "scenesound");
-          })
-
-          await Helpers.asyncForEach(obj.data.notes, async note => {
-            note.icon = await Helpers.exportImage(note.icon, type, note._id, zip, "scenenote");
-          })
-
-          break;
-        case "actor" :
-          obj = await game.actors.get(id);
-
-          break;
-        case "item" : 
-          obj = await game.items.get(id);
-          break;
-        case "journal":
-          obj = await game.journal.get(id);
-          break;
-        case "table" : 
-          obj = await game.tables.get(id);
-          const tableData = JSON.parse(JSON.stringify(obj.data));
-          totalcount += tableData.results.length;
-
-          await Helpers.asyncForEach(tableData.results, async (result) => {
-            result.img = await Helpers.exportImage(result.img, type, result._id, zip, "table");
-            currentcount +=1;
-            this._updateProgress(totalcount, currentcount);
-          });
-
-          data = Helpers.exportToJSON(tableData)
-          break;
-        case "playlist" : 
-          obj = await game.playlists.get(id);
-          const playlistData = JSON.parse(JSON.stringify(obj.data));
-          totalcount += playlistData.sounds.length;
-
-          await Helpers.asyncForEach(playlistData.sounds, async (sound) => {
-            sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "sounds");
-            currentcount +=1;
-            this._updateProgress(totalcount, currentcount);
-          });
-
-          data = Helpers.exportToJSON(playlistData)
-          break;
-        case "compendium" : 
-          obj = await game.packs.get(id);
-          let content = await obj.getContent();
-          const compendiumData = JSON.parse(JSON.stringify(content));
-          totalcount += compendiumData.length;
-
-          await Helpers.asyncForEach(compendiumData, async (item) => {
-            item.img = await Helpers.exportImage(item.img, type, item._id, zip);
-            currentcount +=1;
-            this._updateProgress(totalcount, currentcount);
-          })
-          
-          data = Helpers.exportToJSON({ info : obj.metadata,
-            items : compendiumData
-          });
-          
-          break;
+      try {
+        let obj;
+        let data;
+  
+        switch(type) {
+          case "scene" :
+            obj = await game.scenes.get(id);
+  
+            totalcount += obj.data.tokens.length + obj.data.sounds.length + obj.data.notes.length;
+            await Helpers.asyncForEach(obj.data.tokens, async token => {
+              token.img = await Helpers.exportImage(token.img, type, token._id, zip, "tokenimage");
+            })
+  
+            await Helpers.asyncForEach(obj.data.sounds, async sound => {
+              sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "scenesound");
+            })
+  
+            await Helpers.asyncForEach(obj.data.notes, async note => {
+              note.icon = await Helpers.exportImage(note.icon, type, note._id, zip, "scenenote");
+            })
+  
+            break;
+          case "actor" :
+            obj = await game.actors.get(id);
+  
+            break;
+          case "item" : 
+            obj = await game.items.get(id);
+            break;
+          case "journal":
+            obj = await game.journal.get(id);
+            break;
+          case "table" : 
+            obj = await game.tables.get(id);
+            const tableData = JSON.parse(JSON.stringify(obj.data));
+            totalcount += tableData.results.length;
+  
+            await Helpers.asyncForEach(tableData.results, async (result) => {
+              result.img = await Helpers.exportImage(result.img, type, result._id, zip, "table");
+              currentcount +=1;
+              this._updateProgress(totalcount, currentcount);
+            });
+  
+            data = Helpers.exportToJSON(tableData)
+            break;
+          case "playlist" : 
+            obj = await game.playlists.get(id);
+            const playlistData = JSON.parse(JSON.stringify(obj.data));
+            totalcount += playlistData.sounds.length;
+  
+            await Helpers.asyncForEach(playlistData.sounds, async (sound) => {
+              sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "sounds");
+              currentcount +=1;
+              this._updateProgress(totalcount, currentcount);
+            });
+  
+            data = Helpers.exportToJSON(playlistData)
+            break;
+          case "compendium" : 
+            obj = await game.packs.get(id);
+            let content = await obj.getContent();
+            const compendiumData = JSON.parse(JSON.stringify(content));
+            totalcount += compendiumData.length;
+  
+            await Helpers.asyncForEach(compendiumData, async (item) => {
+              item.img = await Helpers.exportImage(item.img, type, item._id, zip);
+              currentcount +=1;
+              this._updateProgress(totalcount, currentcount);
+            })
+            
+            data = Helpers.exportToJSON({ info : obj.metadata,
+              items : compendiumData
+            });
+            
+            break;
+        }
+        if(type !== "compendium" && type !== "playlist" && type !== "table") {
+          const exportData = JSON.parse(JSON.stringify(obj.data));
+  
+          exportData.img = await Helpers.exportImage(exportData.img, type, id, zip);
+          if(exportData.thumb) {
+            exportData.thumb = await Helpers.exportImage(exportData.thumb, type, id, zip, "thumb");
+          }
+          if(exportData?.token?.img) {
+            exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");
+          }
+          data = Helpers.exportToJSON(exportData)
+        } 
+        zip.folder(type).file(`${id}.json`, data);
+      } catch (err) {
+        Helpers.logger.error(`Error during main export ${id} - ${type}`)
       }
-      if(type !== "compendium" && type !== "playlist" && type !== "table") {
-        const exportData = JSON.parse(JSON.stringify(obj.data));
-
-        exportData.img = await Helpers.exportImage(exportData.img, type, id, zip);
-        if(exportData.thumb) {
-          exportData.thumb = await Helpers.exportImage(exportData.thumb, type, id, zip, "thumb");
-        }
-        if(exportData?.token?.img) {
-          exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");
-        }
-        data = Helpers.exportToJSON(exportData)
-      } 
-      zip.folder(type).file(`${id}.json`, data);
       currentcount +=1;
       this._updateProgress(totalcount, currentcount);
     }
@@ -222,8 +222,6 @@ class AdventureModuleExport extends FormApplication {
     const base64 = await zip.generateAsync({type:"base64"});
     
     const blob = "data:application/zip;base64," + base64;
-
-    // const blob = new Blob([data], {type : "application/octet-stream"});
 
     let a = document.createElement('a');
     a.href = blob;
