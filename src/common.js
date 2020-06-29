@@ -92,15 +92,13 @@ class Helpers {
       try {
         // check to see if we can find the image in the data area
         await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
-      } catch (err) {
-        isDataImage = false;
-      }
-      if(isDataImage) {
         const img = await JSZipUtils.getBinaryContent(itempath);
         const filename = path.replace(/^.*[\\\/]/, '')
 
         await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
         return `${type}/${imageType}/${id}/${filename}`;
+      } catch (err) {
+        Helpers.logger.error(`Error occured during ${imageType} export of ${itempath}`, err);
       }
       return `*${path}`;
     }
@@ -118,7 +116,7 @@ class Helpers {
       // this file was flagged as core data, just replace name.
       return path.replace(/\*/g, "");
     } else {
-      const filename = path.replace(/^.*[\\\/]/, '')
+      let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
       await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
       const img = await zip.file(path).async("uint8array");
       const i = new File([img], filename);

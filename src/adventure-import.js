@@ -101,7 +101,8 @@ class AdventureModuleImport extends FormApplication {
       if(this._itemsToRevisit.length > 0) {
         await Helpers.asyncForEach(this._itemsToRevisit, async item => {
           const obj = await fromUuid(item);
-
+          let rawData;
+          let updatedData;
           switch (obj.entity) {
             case "Scene":
               // this is a scene we need to update links to all items 
@@ -117,11 +118,17 @@ class AdventureModuleImport extends FormApplication {
                   await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
                 }
               });
+              let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
+              obj.data.journal = sceneJournal?._id;
+              let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
+              obj.data.playlist = scenePlaylist?._id;
+              rawData = JSON.stringify(obj.data);
+              updatedData = Helpers.buildUpdateData(JSON.parse(rawData));
+              await obj.update(updatedData);
               break;
             default:
               // this is where there is reference in one of the fields
-              const rawData = JSON.stringify(obj.data);
-              //const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])/gmi
+              rawData = JSON.stringify(obj.data);
               const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
               
               const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
@@ -180,12 +187,9 @@ class AdventureModuleImport extends FormApplication {
               const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
 
               //const updatedRawData = await rawData.replace(pattern, await referenceUpdater);
-              const updatedData = Helpers.buildUpdateData(JSON.parse(updatedRawData));
+              updatedData = Helpers.buildUpdateData(JSON.parse(updatedRawData));
               await obj.update(updatedData);
           }
-
-          console.log(item);
-          console.log(obj);
         });
       }
       
