@@ -109,19 +109,27 @@ class AdventureModuleImport extends FormApplication {
               await Helpers.asyncForEach(obj.data.tokens, async token => {
                 if(token.actorId) {
                   const actor = Helpers.findEntityByImportId("actors", token.actorId);
-                  await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                  if(actor) {
+                    await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                  }
                 }
               });
               await Helpers.asyncForEach(obj.data.notes, async note => {
                 if(note.entryId) {
                   const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
-                  await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                  if(journalentry) {
+                    await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                  }
                 }
               });
               let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
-              obj.data.journal = sceneJournal?._id;
+              if(sceneJournal) {
+                obj.data.journal = sceneJournal?._id;
+              }
               let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
-              obj.data.playlist = scenePlaylist?._id;
+              if(scenePlaylist) {
+                obj.data.playlist = scenePlaylist?._id;
+              }
               rawData = JSON.stringify(obj.data);
               updatedData = Helpers.buildUpdateData(JSON.parse(rawData));
               await obj.update(updatedData);
@@ -154,12 +162,15 @@ class AdventureModuleImport extends FormApplication {
                     break;
                 }
 
-                let newObj;
+                let newObj = {  _id: p3 }
 
                 if(p1 !== "@Compendium") {
-                  newObj = Helpers.findEntityByImportId(refType, p3);
+                  let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
+                  if(nonCompendiumItem) {
+                    newObj = nonCompendiumItem;
+                  }
                 } else {
-                  newObj = {  _id: "" } ;
+                  newObj = {  _id: p3 } ;
                   const [p, name, entryid] = p3.split("."); 
                   try {
                     const pack = await game.packs.get(`${p}.${name}`);
@@ -423,7 +434,7 @@ class AdventureModuleImport extends FormApplication {
           if(!Helpers.findEntityByImportId("items", data._id)) {
             let item = await Item.create(data);
             if(needRevisit) {
-              this._itemsToRevisit.push(`Actor.${item.data._id}`);
+              this._itemsToRevisit.push(`Item.${item.data._id}`);
             }
           }
         break;
@@ -431,7 +442,7 @@ class AdventureModuleImport extends FormApplication {
           if(!Helpers.findEntityByImportId("journal", data._id)) {
             let journal = await JournalEntry.create(data);
             if(needRevisit) {
-              this._itemsToRevisit.push(`Actor.${journal.data._id}`);
+              this._itemsToRevisit.push(`JournalEntry.${journal.data._id}`);
             }
           }
         break;
