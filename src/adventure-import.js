@@ -11,7 +11,7 @@ class AdventureModuleImport extends FormApplication {
 
   /** @override */
   async getData() {
-    const importpath = game.settings.get("adventureimportexport", "importpath");
+    const importpath = game.settings.get("adventure-import-export", "importpath");
     let data;
     let files = [];
 
