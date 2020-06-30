@@ -2,7 +2,7 @@ CONFIG.module = "Adventure Import/Export";
 
 Hooks.on('ready', () => {
   // Importer Control Menu
-  game.settings.registerMenu("adventureimportexport", "aieImporter", {
+  game.settings.registerMenu("adventure-import-export", "aieImporter", {
     name: "Adventure Import",
     label: "Adventure Importer",
     hint: "Import data from exported adventure",
@@ -11,7 +11,7 @@ Hooks.on('ready', () => {
     restricted: true,
   });
 
-  game.settings.register("adventureimportexport", "aieExporter", {
+  game.settings.register("adventure-import-export", "aieExporter", {
     name: "Adventure Exporter",
     scope: "world",
     default: {},
@@ -20,7 +20,7 @@ Hooks.on('ready', () => {
     type: Object,
   });
 
-  game.settings.registerMenu("adventureimportexport", "aieExporter", {
+  game.settings.registerMenu("adventure-import-export", "aieExporter", {
     name: "Adventure Exporter",
     label: "Adventure Exporter",
     hint: "Export data to adventure file",
@@ -29,7 +29,7 @@ Hooks.on('ready', () => {
     restricted: true,
   });
 
-  game.settings.register("adventureimportexport", "aieImporter", {
+  game.settings.register("adventure-import-export", "aieImporter", {
     name: "Adventure Importer",
     scope: "world",
     default: {},
@@ -38,7 +38,7 @@ Hooks.on('ready', () => {
     type: Object,
   });
 
-  game.settings.register("adventureimportexport", "importpath", {
+  game.settings.register("adventure-import-export", "importpath", {
 		name: "Import Path (Data/)",
 		hint: "Location where the module will look for adventure data files to import",
 		scope: "world",
