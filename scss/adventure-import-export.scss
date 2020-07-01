@@ -1,15 +1,9 @@
-// Import utilities.
-@import "utils/typography";
-@import "utils/colors";
-@import "utils/mixins";
-@import "utils/variables";
 
-/* Global styles */
-@import "global/window";
-@import "global/grid";
-@import "global/flex";
 
 .adventure-import-export {
+  @import "global/grid";
+  @import "global/flex";
+
   @import "components/accordion";
   @import "components/progress";
 }
