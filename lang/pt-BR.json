@@ -1,0 +1,21 @@
+{
+  "AIE.Scene"         : "Cena",
+  "AIE.Scenes"        : "Cenas",
+  "AIE.Actor"         : "Ator",
+  "AIE.Actors"        : "Atores",
+  "AIE.Item"          : "Item",
+  "AIE.Items"         : "Itens",
+  "AIE.JournalEntry"  : "EntradaDiario",
+  "AIE.Journals"      : "Diário",
+  "AIE.Rolltable"     : "Tabela de Rolagem",
+  "AIE.Rolltables"    : "Tabelas de Rolagens",
+  "AIE.Playlist"      : "Lista de Reprodução",
+  "AIE.Playlists"     : "Lista de Reproduções",
+  "AIE.Compendium"    : "Compêndio",
+  "AIE.Compendiums"   : "Compêndium",
+  "AIE.AdventureName" : "Nome da Aventura",
+  "AIE.Export"        : "Exportar Assets",
+  "AIE.Import"        : "Importar Aventura",
+  "AIE.Working"       : "Executando",
+  "AIE.ActiveModules" : "OS Seguintes módulos estão ativos:"
+}
