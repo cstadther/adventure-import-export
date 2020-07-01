@@ -1,3 +1,5 @@
+* 2020/06/30 - Moved or removed styling that was not being used.
+* 2020/06/30 - rinnocenti - Added Brazilian Portuguese localization
 * 2020/06/29 - Bug fix for Module Configuration Option for Import Path
 * 2020/06/29 - Bug fix for Module Configuration Options
 * 2020/06/29 - Bug fix for import where game system has included compendiums, importer was aggressively trying to repair references.
