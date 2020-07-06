@@ -20,7 +20,7 @@ class Helpers {
           await FilePicker.createDirectory(startingSource, `${currentSource}`, {bucket:null});
           
         } catch (err) {
-          Helpers.logger.debug(err);
+          Helpers.logger.debug(`Error trying to verify path ${startingSource}, ${path}`, err);
         }
       }
     } catch (err) {
@@ -98,7 +98,7 @@ class Helpers {
         await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
         return `${type}/${imageType}/${id}/${filename}`;
       } catch (err) {
-        Helpers.logger.error(`Error occured during ${imageType} export of ${itempath}`, err);
+        Helpers.logger.debug(`Warning during ${imageType} export. ${itempath} is not in the data folder or could be a core image.`);
       }
       return `*${path}`;
     }
