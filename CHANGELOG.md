@@ -1,3 +1,4 @@
+* 2020/07/06 - Updated logging to log non-critical bugs as warnings or debug level messages.
 * 2020/06/30 - Moved or removed styling that was not being used.
 * 2020/06/30 - rinnocenti - Added Brazilian Portuguese localization
 * 2020/06/29 - Bug fix for Module Configuration Option for Import Path

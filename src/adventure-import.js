@@ -188,7 +188,7 @@ class AdventureModuleImport extends FormApplication {
                       newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
                     }
                   } catch (err) {
-                    Helpers.logger.error(err);
+                    Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
                   }
                 }
 
