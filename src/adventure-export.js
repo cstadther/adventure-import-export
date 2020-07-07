@@ -121,20 +121,32 @@ class AdventureModuleExport extends FormApplication {
         switch(type) {
           case "scene" :
             obj = await game.scenes.get(id);
+
+            const sceneData = JSON.parse(JSON.stringify(obj.data));
   
-            totalcount += obj.data.tokens.length + obj.data.sounds.length + obj.data.notes.length;
-            await Helpers.asyncForEach(obj.data.tokens, async token => {
+            totalcount += sceneData.tokens.length + sceneData.sounds.length + sceneData.notes.length;
+            await Helpers.asyncForEach(sceneData.tokens, async token => {
               token.img = await Helpers.exportImage(token.img, type, token._id, zip, "tokenimage");
             })
   
-            await Helpers.asyncForEach(obj.data.sounds, async sound => {
+            await Helpers.asyncForEach(sceneData.sounds, async sound => {
               sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "scenesound");
             })
   
-            await Helpers.asyncForEach(obj.data.notes, async note => {
+            await Helpers.asyncForEach(sceneData.notes, async note => {
               note.icon = await Helpers.exportImage(note.icon, type, note._id, zip, "scenenote");
-            })
+            });
+
+            sceneData.img = await Helpers.exportImage(sceneData.img, type, id, zip);
+            if(sceneData.thumb) {
+              sceneData.thumb = await Helpers.exportImage(sceneData.thumb, type, id, zip, "thumb");
+            }
+            if(sceneData?.token?.img) {
+              sceneData.token.img = await Helpers.exportImage(sceneData.token.img, type, id, zip, "token");
+            }
   
+            data = Helpers.exportToJSON(sceneData);
+
             break;
           case "actor" :
             obj = await game.actors.get(id);
@@ -190,7 +202,7 @@ class AdventureModuleExport extends FormApplication {
             
             break;
         }
-        if(type !== "compendium" && type !== "playlist" && type !== "table") {
+        if(type !== "compendium" && type !== "playlist" && type !== "table" && type !== "scene") {
           const exportData = JSON.parse(JSON.stringify(obj.data));
   
           exportData.img = await Helpers.exportImage(exportData.img, type, id, zip);
