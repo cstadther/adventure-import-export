@@ -417,6 +417,10 @@ class AdventureModuleImport extends FormApplication {
               note.icon = await Helpers.importImage(note.icon, zip, adventure);
             })
 
+            await Helpers.asyncForEach(data.tiles, async tile => {
+              tile.img = await Helpers.importImage(tile.img, zip, adventure);
+            })
+
             let scene = await Scene.create(data);
             this._itemsToRevisit.push(`Scene.${scene.data._id}`)
           }
