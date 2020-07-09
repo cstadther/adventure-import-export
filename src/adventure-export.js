@@ -124,7 +124,7 @@ class AdventureModuleExport extends FormApplication {
 
             const sceneData = JSON.parse(JSON.stringify(obj.data));
   
-            totalcount += sceneData.tokens.length + sceneData.sounds.length + sceneData.notes.length;
+            totalcount += sceneData.tokens.length + sceneData.sounds.length + sceneData.notes.length + sceneData.tiles.length;
             await Helpers.asyncForEach(sceneData.tokens, async token => {
               token.img = await Helpers.exportImage(token.img, type, token._id, zip, "tokenimage");
             })
@@ -135,6 +135,10 @@ class AdventureModuleExport extends FormApplication {
   
             await Helpers.asyncForEach(sceneData.notes, async note => {
               note.icon = await Helpers.exportImage(note.icon, type, note._id, zip, "scenenote");
+            });
+
+            await Helpers.asyncForEach(sceneData.tiles, async tile => {
+              tile.img = await Helpers.exportImage(tile.img, type, tile._id, zip, "tileimage");
             });
 
             sceneData.img = await Helpers.exportImage(sceneData.img, type, id, zip);
