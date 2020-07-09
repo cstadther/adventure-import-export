@@ -1,3 +1,4 @@
+* 2020/07/08 - Added scene tiles to export and import
 * 2020/07/06 - Updated scene export to not overwrite data.
 * 2020/07/06 - Updated logging to log non-critical bugs as warnings or debug level messages.
 * 2020/06/30 - Moved or removed styling that was not being used.
