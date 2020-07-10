@@ -1,4 +1,5 @@
-class AdventureModuleExport extends FormApplication {
+import Helpers from "./common.js";
+export default class AdventureModuleExport extends FormApplication {
   /** @override */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
@@ -68,9 +69,19 @@ class AdventureModuleExport extends FormApplication {
       }
     });
     
+    let warnings = [];
+
+    let isTooDeep = game.folders.filter(folder => { return folder.depth === 3 }).length > 0;
+
+    if(isTooDeep) {
+      warnings.push(`There are folders at the max depth, this folders will not export correctly as all assets are placed under an adventure folder when imported. The maximum depth allowed is 2.`);
+    }
+    
     return {
       data,
-      cssClass : "aie-exporter-window"
+      cssClass : "aie-exporter-window",
+      hasWarnings : warnings.length > 0,
+      warnings
     };
   }
 
@@ -226,12 +237,23 @@ class AdventureModuleExport extends FormApplication {
       this._updateProgress(totalcount, currentcount);
     }
 
+    let folderData = [];
+
+    await game.folders.forEach(folder => {
+      let f = JSON.parse(JSON.stringify(folder.data));
+      f.flags.importid = f._id;
+      folderData.push(f);
+    })
+
+    zip.file("folders.json", Helpers.exportToJSON(folderData));
+
     const descriptor = {
       id: randomID(),
       name,
       description : $("#adventure_description").val(),
       system : game.data.system.data.name,
-      modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title })
+      modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title }),
+      version : CONFIG.schemaVersion
     }
 
     zip.file("adventure.json", Helpers.exportToJSON(descriptor));
