@@ -188,3 +188,12 @@
   top: 0;
   left: 0;
 }
+
+.adventure-import-export .warnings {
+  margin: 10px 0;
+}
+
+.adventure-import-export .warnings h3 {
+  color: #910000;
+  font-weight: bold;
+}

@@ -1,4 +1,12 @@
 <form class="{{cssClass}}" autocomplete="off">
+  {{#if hasWarnings}}
+  <div class="warnings">
+    <h3>EXPORT WARNINGS</h3>
+    {{#each warnings as |warning id|}} 
+      <li>{{warning}}</li>
+    {{/each}}
+  </div>
+  {{/if}}
   <div class="asset-selector">
     <div class="aie-accordion"><input type="checkbox" value="scenes"/> {{localize "AIE.Scenes"}}</div>
     <div class="scenes panel grid grid-2col">
