@@ -1,3 +1,4 @@
+* 2020/07/09 - Added folder export for assets (IMPORTANT NOTE: Max folder depth for exported folders is 2, and core max depth is 3 and first is taken by adventure name folder)
 * 2020/07/08 - Added scene tiles to export and import
 * 2020/07/06 - Updated scene export to not overwrite data.
 * 2020/07/06 - Updated logging to log non-critical bugs as warnings or debug level messages.

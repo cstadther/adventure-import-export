@@ -1,4 +1,8 @@
+import AdventureModuleImport from "./adventure-import.js";
+import AdventureModuleExport from "./adventure-export.js";
+
 CONFIG.module = "Adventure Import/Export";
+CONFIG.schemaVersion = "1.1";
 
 Hooks.on('ready', () => {
   // Importer Control Menu

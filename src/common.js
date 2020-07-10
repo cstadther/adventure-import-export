@@ -1,4 +1,4 @@
-class Helpers {
+export default class Helpers {
   
   /**
    * Verifies server path exists, and if it doesn't creates it.
@@ -38,7 +38,6 @@ class Helpers {
    */
   static exportToJSON(data) {
     const exportData = duplicate(data);
-    delete data.folder;
     delete data.permission;
 
     // if this object has a souce include it.

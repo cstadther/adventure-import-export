@@ -1,4 +1,5 @@
-class AdventureModuleImport extends FormApplication {
+import Helpers from "./common.js";
+export default class AdventureModuleImport extends FormApplication {
   /** @override */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
@@ -63,6 +64,12 @@ class AdventureModuleImport extends FormApplication {
         .then(JSZip.loadAsync);
 
       const adventure = JSON.parse(await zip.file("adventure.json").async("text"));
+      let folders;
+      try {
+        folders = JSON.parse(await zip.file("folders.json").async("text"));
+      } catch (err) {
+        Helpers.logger.warn(`Folder structure file not found.`);
+      }
 
       if(adventure.system !== game.data.system.data.name ) {
         ui.notifications.error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
@@ -71,31 +78,31 @@ class AdventureModuleImport extends FormApplication {
 
       if(this._folderExists("scene", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading scenes`);
-        await this._importFile("scene", zip, adventure);
+        await this._importFile("scene", zip, adventure, folders);
       }
       if(this._folderExists("actor", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading actors`);
-        await this._importFile("actor", zip, adventure);
+        await this._importFile("actor", zip, adventure, folders);
       }
       if(this._folderExists("item", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading item`);
-        await this._importFile("item", zip, adventure);
+        await this._importFile("item", zip, adventure, folders);
       }
       if(this._folderExists("journal", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading journal`);
-        await this._importFile("journal", zip, adventure);
+        await this._importFile("journal", zip, adventure, folders);
       }
       if(this._folderExists("table", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading table`);
-        await this._importFile("table", zip, adventure);
+        await this._importFile("table", zip, adventure, folders);
       }
       if(this._folderExists("playlist", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading playlist`);
-        await this._importFile("playlist", zip, adventure);
+        await this._importFile("playlist", zip, adventure, folders);
       }
       if(this._folderExists("compendium", zip)) {
         Helpers.logger.debug(`${adventure.name} - Loading compendium`);
-        await this._importCompendium("compendium", zip, adventure);
+        await this._importCompendium("compendium", zip, adventure, folders);
       }
 
       if(this._itemsToRevisit.length > 0) {
@@ -325,9 +332,10 @@ class AdventureModuleImport extends FormApplication {
     });
   }
 
-  async _importFile(type, zip, adventure) {
+  async _importFile(type, zip, adventure, folders) {
     let totalcount = 0;
     let currentcount = 0;
+    let folderMap = {};
 
     const typeName = type[0].toUpperCase() + type.slice(1);
     let importType = typeName;
@@ -388,16 +396,49 @@ class AdventureModuleImport extends FormApplication {
             itemfolder = await Folder.create({
               color: "#FF0000",
               name : adventure.name,
-              parent : "",
+              parent : null,
               type : importType
+            });
+            
+            let createFolders = folders.filter(folder => { return folder.type === importType });
+
+            await Helpers.asyncForEach(createFolders, async f => {
+              let folderData = f;
+
+              if(folderData.parent !== null) {
+                folderData.parent = folderMap[folderData.parent]
+              } else {
+                folderData.parent = itemfolder.data._id;
+              }
+
+              let newfolder = await Folder.create(folderData);
+              Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
+
+              if(newfolder.data.parent !== folderData.parent) {
+                newfolder.data.parent = folderData.parent;
+              }
+
+              folderMap[folderData.flags.importid] = newfolder.data._id;
+
+              console.log(folderMap);
             })
+
+
+            for(let i = 0; i < createFolders.length; i+=1) {
+              
+            }
           } catch (err) {
             console.error(`Error Creating folder ${adventure.name} - ${importType}`)
+            console.error(err);
           }
-          
         } 
-      
-        data.folder = itemfolder.data._id;
+        if(folderMap[data.folder]) {
+          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${folderMap[data.folder]}`);
+          data.folder = folderMap[data.folder];
+        } else {
+          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${itemfolder.data._id}`);
+          data.folder = itemfolder.data._id;
+        }
       }
 
       let id;
