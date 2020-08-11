@@ -109,7 +109,7 @@ export default class AdventureModuleImport extends FormApplication {
         await Helpers.asyncForEach(this._itemsToRevisit, async item => {
           const obj = await fromUuid(item);
           let rawData;
-          let updatedData;
+          let updatedData = {};
           switch (obj.entity) {
             case "Scene":
               // this is a scene we need to update links to all items 
@@ -131,14 +131,12 @@ export default class AdventureModuleImport extends FormApplication {
               });
               let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
               if(sceneJournal) {
-                obj.data.journal = sceneJournal?._id;
+                updatedData["journal"] = sceneJournal?._id;
               }
               let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
               if(scenePlaylist) {
-                obj.data.playlist = scenePlaylist?._id;
+                updatedData["playlist"] = scenePlaylist?._id;
               }
-              rawData = JSON.stringify(obj.data);
-              updatedData = Helpers.buildUpdateData(JSON.parse(rawData));
               await obj.update(updatedData);
               break;
             default:
@@ -203,9 +201,10 @@ export default class AdventureModuleImport extends FormApplication {
               }
 
               const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-
-              //const updatedRawData = await rawData.replace(pattern, await referenceUpdater);
-              updatedData = Helpers.buildUpdateData(JSON.parse(updatedRawData));
+              const updatedDataUpdates = JSON.parse(updatedRawData);
+              const diff = Helpers.diff(obj.data, JSON.parse(updatedRawData));
+              
+              updatedData = Helpers.buildUpdateData(diff);
               await obj.update(updatedData);
           }
         });

@@ -1,3 +1,4 @@
+* 2020/08/10 - Fixed issue where on import, while testing for and updating references, was building updata dataset using entire data structure, instead of only updated references properties.
 * 2020/07/09 - Added folder export for assets (IMPORTANT NOTE: Max folder depth for exported folders is 2, and core max depth is 3 and first is taken by adventure name folder)
 * 2020/07/08 - Added scene tiles to export and import
 * 2020/07/06 - Updated scene export to not overwrite data.
