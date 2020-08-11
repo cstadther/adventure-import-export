@@ -173,30 +173,40 @@ export default class Helpers {
    */
   static buildUpdateData = (newItem) => {
     let updateData = {};
-    for(let key in newItem.data) {
+
+    for(let key in newItem) {
       const recursiveObject = (itemkey, obj) => {
         for(let objkey in obj) {
           if(typeof obj[objkey] === "object") {
             recursiveObject(`${itemkey}.${objkey}`, obj[objkey]);
           } else {
             if(obj[objkey]) {
-              const datakey = `data.${itemkey}.${objkey}`;
+              const datakey = `${itemkey}.${objkey}`;
               updateData[datakey] = obj[objkey];
             }
           }
         }
       }
 
-      if(typeof newItem.data[key] === "object") {
-        recursiveObject(key, newItem.data[key]);
+      if(typeof newItem[key] === "object") {
+        recursiveObject(key, newItem[key]);
       } else {
-        const datakey = `data.${key}`;
-        updateData[datakey] = `${newItem.data[key]}`
+        const datakey = `${key}`;
+        updateData[datakey] = `${newItem[key]}`
       }
     }
     return updateData
   }
 
+  
+  /**
+   * Async replace for all matching patterns
+   * 
+   * @param  {string} str - Original string to replace values in
+   * @param  {string} regex - regex for matching
+   * @param  {function} asyncFn - async function to run on each match
+   * @returns {string} 
+   */
   static async replaceAsync(str, regex, asyncFn) {
     const promises = [];
     str.replace(regex, (match, ...args) => {
@@ -206,6 +216,25 @@ export default class Helpers {
     const data = await Promise.all(promises);
     return str.replace(regex, () => data.shift());
 }
+
+/**
+ * Returns the difference between object 1 and 2
+ * @param  {object} obj1
+ * @param  {object} obj2
+ * @returns {object}
+ */
+static diff(obj1, obj2) {
+  var result = {};
+  for(const key in obj1) {
+      if(obj2[key] != obj1[key]) result[key] = obj2[key];
+      if(typeof obj2[key] == 'array' && typeof obj1[key] == 'array') 
+          result[key] = this.diff(obj1[key], obj2[key]);
+      if(typeof obj2[key] == 'object' && typeof obj1[key] == 'object') 
+          result[key] = this.diff(obj1[key], obj2[key]);
+  }
+  return result;
+}
+
 
   /** LOGGER */
 
