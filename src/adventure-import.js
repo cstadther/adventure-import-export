@@ -52,16 +52,24 @@ export default class AdventureModuleImport extends FormApplication {
     if(action === "import") {
       $(".import-progress").toggleClass("import-hidden");
       $(".aie-overlay").toggleClass("import-invalid");
-      const selectedFile = $("#import-file").val();
-      const zip = await fetch(`/${selectedFile}`) 
-        .then(function (response) {                       
-            if (response.status === 200 || response.status === 0) {
-                return Promise.resolve(response.blob());
-            } else {
-                return Promise.reject(new Error(response.statusText));
-            }
-        })
-        .then(JSZip.loadAsync);
+
+      const form = $("form.aie-importer-window")[0];
+
+      let zip;
+      if (form.data.files.length) {
+        zip = await Helpers.readBlobFromFile(form.data.files[0]).then(JSZip.loadAsync);
+      } else {
+        const selectedFile = $("#import-file").val();
+        zip = await fetch(`/${selectedFile}`) 
+          .then(function (response) {                       
+              if (response.status === 200 || response.status === 0) {
+                  return Promise.resolve(response.blob());
+              } else {
+                  return Promise.reject(new Error(response.statusText));
+              }
+          })
+          .then(JSZip.loadAsync);
+      }
 
       const adventure = JSON.parse(await zip.file("adventure.json").async("text"));
       let folders;
