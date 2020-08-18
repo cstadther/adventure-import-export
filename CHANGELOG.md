@@ -1,3 +1,5 @@
+* 2020/08/18 - Added ability to turn off adventure folder creation, and only use exported folders.
+* 2020/08/18 - Added ability to select a file local to the client to upload/import.  This file is not uploaded and stored, just uploaded and imported.
 * 2020/08/10 - Fixed issue where on import, while testing for and updating references, was building updata dataset using entire data structure, instead of only updated references properties.
 * 2020/07/09 - Added folder export for assets (IMPORTANT NOTE: Max folder depth for exported folders is 2, and core max depth is 3 and first is taken by adventure name folder)
 * 2020/07/08 - Added scene tiles to export and import

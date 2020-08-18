@@ -391,13 +391,17 @@ export default class AdventureModuleImport extends FormApplication {
       
       data.flags.importid = data._id;
 
-      let itemfolder = game.folders.find(folder => {
-        return folder.data.name === adventure.name && folder.data.type === importType;
-      });
-
+      
       if(typeName !== "Playlist" && typeName !== "Compendium") {
-        if(!itemfolder) {
-          try {
+        const maintainFolders = adventure?.options?.folders;
+
+        let itemfolder = null;
+        if(!maintainFolders) {
+          itemfolder = game.folders.find(folder => {
+            return folder.data.name === adventure.name && folder.data.type === importType;
+          }); 
+
+          if(!itemfolder) {
             Helpers.logger.debug(`Creating folder ${adventure.name} - ${importType}`);
   
             itemfolder = await Folder.create({
@@ -406,39 +410,32 @@ export default class AdventureModuleImport extends FormApplication {
               parent : null,
               type : importType
             });
-            
-            let createFolders = folders.filter(folder => { return folder.type === importType });
-
-            await Helpers.asyncForEach(createFolders, async f => {
-              let folderData = f;
-
-              if(folderData.parent !== null) {
-                folderData.parent = folderMap[folderData.parent]
-              } else {
-                folderData.parent = itemfolder.data._id;
-              }
-
-              let newfolder = await Folder.create(folderData);
-              Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
-
-              if(newfolder.data.parent !== folderData.parent) {
-                newfolder.data.parent = folderData.parent;
-              }
-
-              folderMap[folderData.flags.importid] = newfolder.data._id;
-
-              console.log(folderMap);
-            })
-
-
-            for(let i = 0; i < createFolders.length; i+=1) {
-              
-            }
-          } catch (err) {
-            console.error(`Error Creating folder ${adventure.name} - ${importType}`)
-            console.error(err);
           }
-        } 
+        }
+        
+        let createFolders = folders.filter(folder => { return folder.type === importType });
+
+        await Helpers.asyncForEach(createFolders, async f => {
+          let folderData = f;
+
+          if(folderData.parent !== null) {
+            folderData.parent = folderMap[folderData.parent]
+          } else {
+            folderData.parent = itemfolder?.data?._id ? itemfolder.data._id : itemfolder;
+          }
+
+          let newfolder = await Folder.create(folderData);
+          Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
+
+          if(newfolder.data.parent !== folderData.parent) {
+            newfolder.data.parent = folderData.parent;
+          }
+
+          folderMap[folderData.flags.importid] = newfolder.data._id;
+
+          console.log(folderMap);
+        })
+        
         if(folderMap[data.folder]) {
           Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${folderMap[data.folder]}`);
           data.folder = folderMap[data.folder];
