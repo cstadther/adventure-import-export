@@ -253,7 +253,10 @@ export default class AdventureModuleExport extends FormApplication {
       description : $("#adventure_description").val(),
       system : game.data.system.data.name,
       modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title }),
-      version : CONFIG.schemaVersion
+      version : CONFIG.schemaVersion,
+      options : {
+        folders : $(".aie-exporter-window input[type='checkbox'][value='directories']:checked").length > 0 ? true : false
+      }
     }
 
     zip.file("adventure.json", Helpers.exportToJSON(descriptor));
