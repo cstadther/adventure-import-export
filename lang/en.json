@@ -17,5 +17,6 @@
   "AIE.Export"        : "Export Assets",
   "AIE.Import"        : "Import Adventure",
   "AIE.Working"       : "Working",
-  "AIE.ActiveModules" : "The following modules were active:"
+  "AIE.ActiveModules" : "The following modules were active:",
+  "AIT.ExportOptions" : "Export Options"
 }
