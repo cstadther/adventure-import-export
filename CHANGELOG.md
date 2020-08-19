@@ -1,3 +1,4 @@
+* 2020/08/19 - Fixed issue where folders were not importing correctly if they already existed or had already been created.
 * 2020/08/18 - Added ability to turn off adventure folder creation, and only use exported folders.
 * 2020/08/18 - Added ability to select a file local to the client to upload/import.  This file is not uploaded and stored, just uploaded and imported.
 * 2020/08/10 - Fixed issue where on import, while testing for and updating references, was building updata dataset using entire data structure, instead of only updated references properties.
