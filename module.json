@@ -5,7 +5,7 @@
   "version": "0.4.4",
   "author": "Chris Stadther",
   "minimumCoreVersion": "0.6.0",
-  "compatibleCoreVersion": "0.6.5",
+  "compatibleCoreVersion": "0.7.1",
   "languages" : [
     {
       "lang": "en",

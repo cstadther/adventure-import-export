@@ -122,6 +122,8 @@ export default class AdventureModuleExport extends FormApplication {
     let totalcount = controls.length;
     let currentcount = 0;
 
+    CONFIG.AIE.TEMPORARY = {};
+
     for(let i = 0; i < controls.length; i+=1) {
       let id = $(controls[i]).val();
       let type = $(controls[i]).data("type");
@@ -253,7 +255,7 @@ export default class AdventureModuleExport extends FormApplication {
       description : $("#adventure_description").val(),
       system : game.data.system.data.name,
       modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title }),
-      version : CONFIG.schemaVersion,
+      version : CONFIG.AIE.schemaVersion,
       options : {
         folders : $(".aie-exporter-window input[type='checkbox'][value='directories']:checked").length > 0 ? true : false
       }
@@ -271,6 +273,8 @@ export default class AdventureModuleExport extends FormApplication {
     a.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, view: window}));
     setTimeout(() => window.URL.revokeObjectURL(a.href), 100);
     $(".aie-overlay").toggleClass("import-invalid");
+
+    CONFIG.AIE.TEMPORARY = {};
     this.close();
   }
 
