@@ -17,7 +17,7 @@ export default class AdventureModuleImport extends FormApplication {
     let files = [];
 
     if (Helpers.verifyPath("data", importpath)) {
-      console.debug(`${CONFIG.module} | Import Path Verified`);
+      console.debug(`${CONFIG.AIE.module} | Import Path Verified`);
       data = await FilePicker.browse("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
       files = data.files.map(file => {
         const filename = decodeURIComponent(file).replace(/^.*[\\\/]/, '')

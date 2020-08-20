@@ -87,18 +87,24 @@ export default class Helpers {
     if(itempath) {
       let path = decodeURI(itempath);
 
-      let isDataImage = true;
-      try {
-        // check to see if we can find the image in the data area
-        await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
-        const img = await JSZipUtils.getBinaryContent(itempath);
-        const filename = path.replace(/^.*[\\\/]/, '')
-
-        await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
-        return `${type}/${imageType}/${id}/${filename}`;
-      } catch (err) {
-        Helpers.logger.debug(`Warning during ${imageType} export. ${itempath} is not in the data folder or could be a core image.`);
+      if(CONFIG.AIE.TEMPORARY[itempath]) {
+        return CONFIG.AIE.TEMPORARY[itempath];
+      } else {
+        let isDataImage = true;
+        try {
+          // check to see if we can find the image in the data area
+          await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
+          const img = await JSZipUtils.getBinaryContent(itempath);
+          const filename = path.replace(/^.*[\\\/]/, '')
+  
+          await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
+          CONFIG.AIE.TEMPORARY[itempath] = `${type}/${imageType}/${id}/${filename}`;
+          return `${type}/${imageType}/${id}/${filename}`;
+        } catch (err) {
+          Helpers.logger.debug(`Warning during ${imageType} export. ${itempath} is not in the data folder or could be a core image.`);
+        }
       }
+     
       return `*${path}`;
     }
   }
@@ -297,16 +303,16 @@ export default class Helpers {
 
   static logger = {
     log : (...args) => {
-      console.log(`${CONFIG.module} | `, ...args);
+      console.log(`${CONFIG.AIE.module} | `, ...args);
     },
     debug: (...args) => {
-      console.debug(`${CONFIG.module} | `, ...args);
+      console.debug(`${CONFIG.AIE.module} | `, ...args);
     },
     warn: (...args) => {
-      console.warn(`${CONFIG.module} | `, ...args);
+      console.warn(`${CONFIG.AIE.module} | `, ...args);
     },
     error: (...args) => {
-      console.error(`${CONFIG.module} | `, ...args);
+      console.error(`${CONFIG.AIE.module} | `, ...args);
     }
   }
 
