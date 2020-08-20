@@ -1,3 +1,4 @@
+* 2020/08/19 - Fixed issue of folders.json folders out of order.
 * 2020/08/19 - Fixed issue where folders were not importing correctly if they already existed or had already been created.
 * 2020/08/18 - Added ability to turn off adventure folder creation, and only use exported folders.
 * 2020/08/18 - Added ability to select a file local to the client to upload/import.  This file is not uploaded and stored, just uploaded and imported.
