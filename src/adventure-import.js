@@ -413,31 +413,10 @@ export default class AdventureModuleImport extends FormApplication {
           }
         }
         
-        let createFolders = folders.filter(folder => { return folder.type === importType });
+        // the folder list could be out of order, we need to create all folders with parent null first
+        let firstLevelFolders = folders.filter(folder => { return folder.type === importType && folder.parent === null });
 
-        await Helpers.asyncForEach(createFolders, async f => {
-          let folderData = f;
-
-          let newfolder = game.folders.find(folder => {
-            return (folder.data._id === folderData._id || folder.data.flags.importid === folderData._id) && folder.data.type === folderData.type;
-          }); 
-
-          if(!newfolder) {
-            if(folderData.parent !== null) {
-              folderData.parent = folderMap[folderData.parent]
-            } else {
-              folderData.parent = itemfolder?.data?._id ? itemfolder.data._id : itemfolder;
-            }
-
-            newfolder = await Folder.create(folderData);
-            Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
-
-            if(newfolder.data.parent !== folderData.parent) {
-              newfolder.data.parent = folderData.parent;
-            }
-          }
-          folderMap[folderData.flags.importid] = newfolder.data._id;
-        })
+        folderMap = await Helpers.importFolder(itemfolder, firstLevelFolders, adventure, importType, folderMap, folders)
         
         if(folderMap[data.folder]) {
           Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${folderMap[data.folder]}`);

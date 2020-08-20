@@ -217,43 +217,81 @@ export default class Helpers {
     return str.replace(regex, () => data.shift());
 }
 
-/**
- * Returns the difference between object 1 and 2
- * @param  {object} obj1
- * @param  {object} obj2
- * @returns {object}
- */
-static diff(obj1, obj2) {
-  var result = {};
-  for(const key in obj1) {
-      if(obj2[key] != obj1[key]) result[key] = obj2[key];
-      if(typeof obj2[key] == 'array' && typeof obj1[key] == 'array') 
-          result[key] = this.diff(obj1[key], obj2[key]);
-      if(typeof obj2[key] == 'object' && typeof obj1[key] == 'object') 
-          result[key] = this.diff(obj1[key], obj2[key]);
+  /**
+   * Returns the difference between object 1 and 2
+   * @param  {object} obj1
+   * @param  {object} obj2
+   * @returns {object}
+   */
+  static diff(obj1, obj2) {
+    var result = {};
+    for(const key in obj1) {
+        if(obj2[key] != obj1[key]) result[key] = obj2[key];
+        if(typeof obj2[key] == 'array' && typeof obj1[key] == 'array') 
+            result[key] = this.diff(obj1[key], obj2[key]);
+        if(typeof obj2[key] == 'object' && typeof obj1[key] == 'object') 
+            result[key] = this.diff(obj1[key], obj2[key]);
+    }
+    return result;
   }
-  return result;
-}
 
-/**
- * Read data from a user provided File object
- * @param {File} file           A File object
- * @return {Promise.<String>}   A Promise which resolves to the loaded text data
- */
-static readBlobFromFile(file) {
-  const reader = new FileReader();
-  return new Promise((resolve, reject) => {
-    reader.onload = ev => {
-      resolve(reader.result);
-    };
-    reader.onerror = ev => {
-      reader.abort();
-      reject();
-    };
-    reader.readAsBinaryString(file);
-  });
-}
+  /**
+   * Read data from a user provided File object
+   * @param {File} file           A File object
+   * @return {Promise.<String>}   A Promise which resolves to the loaded text data
+   */
+  static readBlobFromFile(file) {
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = ev => {
+        resolve(reader.result);
+      };
+      reader.onerror = ev => {
+        reader.abort();
+        reject();
+      };
+      reader.readAsBinaryString(file);
+    });
+  }
 
+  static async importFolder(parentFolder, folders, adventure, importType, folderMap, folderList) {
+    let mapping = [];
+
+    await this.asyncForEach(folders, async f => {
+      let folderData = f;
+
+      let newfolder = game.folders.find(folder => {
+        return (folder.data._id === folderData._id || folder.data.flags.importid === folderData._id) && folder.data.type === folderData.type;
+      });
+
+      if(!newfolder) {
+        if(folderData.parent !== null) {
+          folderData.parent = folderMap[folderData.parent]
+        } else {
+          folderData.parent = parentFolder?.data?._id ? parentFolder.data._id : parentFolder;
+        }
+
+        newfolder = await Folder.create(folderData);
+        Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
+
+        if(newfolder.data.parent !== folderData.parent) {
+          newfolder.data.parent = folderData.parent;
+        }
+      }
+      folderMap[folderData.flags.importid] = newfolder.data._id;
+
+      let childFolders = folderList.filter(folder => { return folder.type === importType && folder.parent === folderData._id });
+
+      if(childFolders.length > 0) {
+        mapping = {...mapping, ...folderMap};
+        await this.importFolder(newfolder, childFolders, adventure, importType, folderMap, folderList);
+      } else {
+        mapping = {...mapping, ...folderMap};
+      }
+    });
+
+    return mapping;
+  }
 
   /** LOGGER */
 
