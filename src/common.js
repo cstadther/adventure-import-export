@@ -87,18 +87,24 @@ export default class Helpers {
     if(itempath) {
       let path = decodeURI(itempath);
 
-      let isDataImage = true;
-      try {
-        // check to see if we can find the image in the data area
-        await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
-        const img = await JSZipUtils.getBinaryContent(itempath);
-        const filename = path.replace(/^.*[\\\/]/, '')
-
-        await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
-        return `${type}/${imageType}/${id}/${filename}`;
-      } catch (err) {
-        Helpers.logger.debug(`Warning during ${imageType} export. ${itempath} is not in the data folder or could be a core image.`);
+      if(CONFIG.AIE.TEMPORARY[itempath]) {
+        return CONFIG.AIE.TEMPORARY[itempath];
+      } else {
+        let isDataImage = true;
+        try {
+          // check to see if we can find the image in the data area
+          await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
+          const img = await JSZipUtils.getBinaryContent(itempath);
+          const filename = path.replace(/^.*[\\\/]/, '')
+  
+          await zip.folder(type).folder(imageType).folder(id).file(filename, img, {binary:true});
+          CONFIG.AIE.TEMPORARY[itempath] = `${type}/${imageType}/${id}/${filename}`;
+          return `${type}/${imageType}/${id}/${filename}`;
+        } catch (err) {
+          Helpers.logger.debug(`Warning during ${imageType} export. ${itempath} is not in the data folder or could be a core image.`);
+        }
       }
+     
       return `*${path}`;
     }
   }
@@ -254,7 +260,7 @@ export default class Helpers {
     });
   }
 
-  static async importFolder(parentFolder, folders, adventure, importType, folderMap, folderList) {
+  static async importFolder(parentFolder, folders, adventure, folderList) {
     let mapping = [];
 
     await this.asyncForEach(folders, async f => {
@@ -266,47 +272,39 @@ export default class Helpers {
 
       if(!newfolder) {
         if(folderData.parent !== null) {
-          folderData.parent = folderMap[folderData.parent]
+          folderData.parent = CONFIG.AIE.TEMPORARY.folders[folderData.parent];
         } else {
-          folderData.parent = parentFolder?.data?._id ? parentFolder.data._id : parentFolder;
+          folderData.parent = CONFIG.AIE.TEMPORARY.folders["null"];
         }
 
         newfolder = await Folder.create(folderData);
         Helpers.logger.debug(`Created new folder ${newfolder.data._id} with data:`, folderData, newfolder);
-
-        if(newfolder.data.parent !== folderData.parent) {
-          newfolder.data.parent = folderData.parent;
-        }
       }
-      folderMap[folderData.flags.importid] = newfolder.data._id;
 
-      let childFolders = folderList.filter(folder => { return folder.type === importType && folder.parent === folderData._id });
+      CONFIG.AIE.TEMPORARY.folders[folderData.flags.importid] = newfolder.data._id;
+      
+      let childFolders = folderList.filter(folder => { return folder.parent === folderData._id });
 
       if(childFolders.length > 0) {
-        mapping = {...mapping, ...folderMap};
-        await this.importFolder(newfolder, childFolders, adventure, importType, folderMap, folderList);
-      } else {
-        mapping = {...mapping, ...folderMap};
-      }
+        await this.importFolder(newfolder, childFolders, adventure, folderList);
+      } 
     });
-
-    return mapping;
   }
 
   /** LOGGER */
 
   static logger = {
     log : (...args) => {
-      console.log(`${CONFIG.module} | `, ...args);
+      console.log(`${CONFIG.AIE.module} | `, ...args);
     },
     debug: (...args) => {
-      console.debug(`${CONFIG.module} | `, ...args);
+      console.debug(`${CONFIG.AIE.module} | `, ...args);
     },
     warn: (...args) => {
-      console.warn(`${CONFIG.module} | `, ...args);
+      console.warn(`${CONFIG.AIE.module} | `, ...args);
     },
     error: (...args) => {
-      console.error(`${CONFIG.module} | `, ...args);
+      console.error(`${CONFIG.AIE.module} | `, ...args);
     }
   }
 

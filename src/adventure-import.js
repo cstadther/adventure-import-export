@@ -17,7 +17,7 @@ export default class AdventureModuleImport extends FormApplication {
     let files = [];
 
     if (Helpers.verifyPath("data", importpath)) {
-      console.debug(`${CONFIG.module} | Import Path Verified`);
+      console.debug(`${CONFIG.AIE.module} | Import Path Verified`);
       data = await FilePicker.browse("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
       files = data.files.map(file => {
         const filename = decodeURIComponent(file).replace(/^.*[\\\/]/, '')
@@ -82,6 +82,39 @@ export default class AdventureModuleImport extends FormApplication {
       if(adventure.system !== game.data.system.data.name ) {
         ui.notifications.error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
         throw new Error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
+      }
+
+      CONFIG.AIE.TEMPORARY = {
+        folders : {}
+      }
+
+      if(folders) {
+        const maintainFolders = adventure?.options?.folders;
+        let itemfolder = null;
+        if(!maintainFolders) {
+          itemfolder = game.folders.find(folder => {
+            return folder.data.name === adventure.name && folder.data.type === importType;
+          }); 
+
+          if(!itemfolder) {
+            Helpers.logger.debug(`Creating folder ${adventure.name} - ${importType}`);
+  
+            itemfolder = await Folder.create({
+              color: "#FF0000",
+              name : adventure.name,
+              parent : null,
+              type : importType
+            });
+          }
+
+          CONFIG.AIE.TEMPORARY.folders["null"] = itemfolder.data._id;
+        } else {
+          CONFIG.AIE.TEMPORARY.folders["null"] = null;
+        }
+        
+        // the folder list could be out of order, we need to create all folders with parent null first
+        let firstLevelFolders = folders.filter(folder => { return folder.parent === null });
+        await Helpers.importFolder(itemfolder, firstLevelFolders, adventure, folders)
       }
 
       if(this._folderExists("scene", zip)) {
@@ -239,6 +272,7 @@ export default class AdventureModuleImport extends FormApplication {
         }
       ).render(true);
 
+      CONFIG.AIE.TEMPORARY = {}
       this.close();
     }
   }
@@ -393,37 +427,12 @@ export default class AdventureModuleImport extends FormApplication {
 
       
       if(typeName !== "Playlist" && typeName !== "Compendium") {
-        const maintainFolders = adventure?.options?.folders;
-
-        let itemfolder = null;
-        if(!maintainFolders) {
-          itemfolder = game.folders.find(folder => {
-            return folder.data.name === adventure.name && folder.data.type === importType;
-          }); 
-
-          if(!itemfolder) {
-            Helpers.logger.debug(`Creating folder ${adventure.name} - ${importType}`);
-  
-            itemfolder = await Folder.create({
-              color: "#FF0000",
-              name : adventure.name,
-              parent : null,
-              type : importType
-            });
-          }
-        }
-        
-        // the folder list could be out of order, we need to create all folders with parent null first
-        let firstLevelFolders = folders.filter(folder => { return folder.type === importType && folder.parent === null });
-
-        folderMap = await Helpers.importFolder(itemfolder, firstLevelFolders, adventure, importType, folderMap, folders)
-        
-        if(folderMap[data.folder]) {
-          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${folderMap[data.folder]}`);
-          data.folder = folderMap[data.folder];
+        if(CONFIG.AIE.TEMPORARY.folders[data.folder]) {
+          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${CONFIG.AIE.TEMPORARY.folders[data.folder]}`);
+          data.folder = CONFIG.AIE.TEMPORARY.folders[data.folder];
         } else {
-          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${itemfolder?.data?._id ? itemfolder.data._id : itemfolder}`);
-          data.folder = itemfolder?.data?._id ? itemfolder.data._id : null;
+          Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${CONFIG.AIE.TEMPORARY.folders["null"]}`);
+          data.folder = CONFIG.AIE.TEMPORARY.folders["null"];
         }
       }
 
