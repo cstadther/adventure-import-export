@@ -1,3 +1,4 @@
+* 2020/08/20 - Verified module with version Foundry 0.7.1
 * 2020/08/20 - Fixed issue where folders would display incorrectly until refresh of screen.
 * 2020/08/19 - Enhancement - File Export deduplication, keeps track of files exported, if the are common images or files they will only be exported once.
 * 2020/08/19 - Fixed issue of folders.json folders out of order.
