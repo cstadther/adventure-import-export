@@ -122,7 +122,6 @@ export default class Helpers {
         // this file was flagged as core data, just replace name.
         return path.replace(/\*/g, "");
       } else {
-        
           if(!CONFIG.AIE.TEMPORARY.import[path]) {
             let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
             await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);

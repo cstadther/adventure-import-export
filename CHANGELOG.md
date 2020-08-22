@@ -1,3 +1,6 @@
+
+* 2020/08/21 - Fixed updating embedded objects on Actors.
+* 2020/08/21 - Removed 0.7.1 compatibility as it was found the expanded data structure causes issues with exporting and importing scenes.
 * 2020/08/21 - Fixed issue where sometimes path is an empty string during import image function.
 * 2020/08/21 - Added check for already imported file, if already imported, doesn't try reimporting.
 * 2020/08/21 - Fix for issue where using adventure folder, base folders were not being created for each item type.

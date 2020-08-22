@@ -156,105 +156,123 @@ export default class AdventureModuleImport extends FormApplication {
 
         if(this._itemsToRevisit.length > 0) {
           await Helpers.asyncForEach(this._itemsToRevisit, async item => {
-            const obj = await fromUuid(item);
-            let rawData;
-            let updatedData = {};
-            switch (obj.entity) {
-              case "Scene":
-                // this is a scene we need to update links to all items 
-                await Helpers.asyncForEach(obj.data.tokens, async token => {
-                  if(token.actorId) {
-                    const actor = Helpers.findEntityByImportId("actors", token.actorId);
-                    if(actor) {
-                      await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
-                    }
-                  }
-                });
-                await Helpers.asyncForEach(obj.data.notes, async note => {
-                  if(note.entryId) {
-                    const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
-                    if(journalentry) {
-                      await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
-                    }
-                  }
-                });
-                let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
-                if(sceneJournal) {
-                  updatedData["journal"] = sceneJournal?._id;
-                }
-                let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
-                if(scenePlaylist) {
-                  updatedData["playlist"] = scenePlaylist?._id;
-                }
-                await obj.update(updatedData);
-                break;
-              default:
-                // this is where there is reference in one of the fields
-                rawData = JSON.stringify(obj.data);
-                const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-                
-                const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
-                  let refType;
-
-                  console.log(match);
-
-                  switch(p1.replace(/\@/, "").toLowerCase()) {
-                    case "scene":
-                      refType = "scenes";
-                      break;
-                    case "journalentry":
-                      refType = "journal";
-                      break;
-                    case "rolltable":
-                      refType = "tables";
-                      break;
-                    case "actor":
-                      refType = "actors";
-                      break;
-                    case "item" :
-                      refType = "items";
-                      break;
-                  }
-
-                  let newObj = {  _id: p3 }
-
-                  if(p1 !== "@Compendium") {
-                    let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
-                    if(nonCompendiumItem) {
-                      newObj = nonCompendiumItem;
-                    }
-                  } else {
-                    newObj = {  _id: p3 } ;
-                    const [p, name, entryid] = p3.split("."); 
-                    try {
-                      const pack = await game.packs.get(`${p}.${name}`);
-                      let content = await pack.getContent();
-                        
-                      let compendiumItem = content.find(contentItem => {
-                        return contentItem.data.flags.importid === entryid;  
-                      });
-
-                      if(!compendiumItem) {
-                        await pack.getIndex();
-                        compendiumItem = pack.index.find(e => e.name === p6);
-                        newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
-                      } else {
-                        newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+            try {
+              const obj = await fromUuid(item);
+              let rawData;
+              let updatedData = {};
+              switch (obj.entity) {
+                case "Scene":
+                  // this is a scene we need to update links to all items 
+                  await Helpers.asyncForEach(obj.data.tokens, async token => {
+                    if(token.actorId) {
+                      const actor = Helpers.findEntityByImportId("actors", token.actorId);
+                      if(actor) {
+                        await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
                       }
-                    } catch (err) {
-                      Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
                     }
+                  });
+                  await Helpers.asyncForEach(obj.data.notes, async note => {
+                    if(note.entryId) {
+                      const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
+                      if(journalentry) {
+                        await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                      }
+                    }
+                  });
+                  let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
+                  if(sceneJournal) {
+                    updatedData["journal"] = sceneJournal?._id;
+                  }
+                  let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
+                  if(scenePlaylist) {
+                    updatedData["playlist"] = scenePlaylist?._id;
+                  }
+                  await obj.update(updatedData);
+                  break;
+                default:
+                  // this is where there is reference in one of the fields
+                  rawData = JSON.stringify(obj.data);
+                  const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
+                  
+                  const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
+                    let refType;
+  
+                    console.log(match);
+  
+                    switch(p1.replace(/\@/, "").toLowerCase()) {
+                      case "scene":
+                        refType = "scenes";
+                        break;
+                      case "journalentry":
+                        refType = "journal";
+                        break;
+                      case "rolltable":
+                        refType = "tables";
+                        break;
+                      case "actor":
+                        refType = "actors";
+                        break;
+                      case "item" :
+                        refType = "items";
+                        break;
+                    }
+  
+                    let newObj = {  _id: p3 }
+  
+                    if(p1 !== "@Compendium") {
+                      let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
+                      if(nonCompendiumItem) {
+                        newObj = nonCompendiumItem;
+                      }
+                    } else {
+                      newObj = {  _id: p3 } ;
+                      const [p, name, entryid] = p3.split("."); 
+                      try {
+                        const pack = await game.packs.get(`${p}.${name}`);
+                        let content = await pack.getContent();
+                          
+                        let compendiumItem = content.find(contentItem => {
+                          return contentItem.data.flags.importid === entryid;  
+                        });
+  
+                        if(!compendiumItem) {
+                          await pack.getIndex();
+                          compendiumItem = pack.index.find(e => e.name === p6);
+                          newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
+                        } else {
+                          newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+                        }
+                      } catch (err) {
+                        Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
+                      }
+                    }
+  
+                    return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
+                  }
+  
+                  const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
+                  const updatedDataUpdates = JSON.parse(updatedRawData);
+                  const diff = Helpers.diff(obj.data, updatedDataUpdates);
+                  
+                  if(diff.items && obj.entity === "Actor") {
+                    // the object has embedded items that need to be updated seperately.
+
+                    for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
+                      if(diff.items[i] && Object.keys(diff.items[i].data).length > 0) {
+                        Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, diff.items[i].data)
+                        await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, data : diff.items[i].data});
+                      }
+                    }
+
+                    delete diff.items;
                   }
 
-                  return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
-                }
+                  updatedData = Helpers.buildUpdateData(diff);
 
-                const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-                const updatedDataUpdates = JSON.parse(updatedRawData);
-                const diff = Helpers.diff(obj.data, JSON.parse(updatedRawData));
-                
-                updatedData = Helpers.buildUpdateData(diff);
-                await obj.update(updatedData);
+                  await obj.update(updatedData);
+              } 
+            } catch (err) {
+              Helpers.logger.error(`Error updating references for object ${item}`, err);
             }
           });
         }
@@ -427,12 +445,16 @@ export default class AdventureModuleImport extends FormApplication {
 
       if(typeName === "Playlist") {
         await Helpers.asyncForEach(data.sounds, async (sound) => {
-          sound.path = await Helpers.importImage(sound.path, zip, adventure);
+          if(sound.path) {
+            sound.path = await Helpers.importImage(sound.path, zip, adventure);
+          }
         });
       }  
       if(typeName === "Table") {
         await Helpers.asyncForEach(data.results, async (result) => {
-          result.img = await Helpers.importImage(result.img, zip, adventure);
+          if(result.img) {
+            result.img = await Helpers.importImage(result.img, zip, adventure);
+          }
         })
       }
       
