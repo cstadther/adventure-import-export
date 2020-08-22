@@ -16,15 +16,17 @@ export default class AdventureModuleImport extends FormApplication {
     let data;
     let files = [];
 
-    if (Helpers.verifyPath("data", importpath)) {
-      console.debug(`${CONFIG.AIE.module} | Import Path Verified`);
-      data = await FilePicker.browse("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
-      files = data.files.map(file => {
-        const filename = decodeURIComponent(file).replace(/^.*[\\\/]/, '')
+    try {
+      if (Helpers.verifyPath("data", importpath)) {
+        data = await FilePicker.browse("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
+        files = data.files.map(file => {
+          const filename = decodeURIComponent(file).replace(/^.*[\\\/]/, '')
 
-        return { path: decodeURIComponent(file), name: filename }
-      })
-      
+          return { path: decodeURIComponent(file), name: filename }
+        })
+      }
+    } catch (err) {
+      Helpers.logger.error(`Unable to verify import path, this may be due to permissions on the server.`);
     }
 
     return {
