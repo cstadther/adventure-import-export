@@ -117,27 +117,30 @@ export default class Helpers {
    * @returns {string} - Path to file within VTT
    */
   static async importImage(path, zip, adventure) {
-    if(path[0] === "*") {
-      // this file was flagged as core data, just replace name.
-      return path.replace(/\*/g, "");
-    } else {
-      try {
-        if(!CONFIG.AIE.TEMPORARY.import[path]) {
-          let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
-          await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
-          const img = await zip.file(path).async("uint8array");
-          const i = new File([img], filename);
-          await FilePicker.upload("data", `adventures/${adventure.id}/${path.replace(filename, "")}`, i, { bucket: null });
-          CONFIG.AIE.TEMPORARY.import[path] = true;
-        } else {
-          Helpers.logger.debug(`File already imported ${path}`);  
-        }
-      } catch (err) {
-        Helpers.logger.error(`Error importing image file ${path} : ${err.message}`);
+    try {
+      if(path[0] === "*") {
+        // this file was flagged as core data, just replace name.
+        return path.replace(/\*/g, "");
+      } else {
+        
+          if(!CONFIG.AIE.TEMPORARY.import[path]) {
+            let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
+            await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
+            const img = await zip.file(path).async("uint8array");
+            const i = new File([img], filename);
+            await FilePicker.upload("data", `adventures/${adventure.id}/${path.replace(filename, "")}`, i, { bucket: null });
+            CONFIG.AIE.TEMPORARY.import[path] = true;
+          } else {
+            Helpers.logger.debug(`File already imported ${path}`);  
+          }
+        
+        return `adventures/${adventure.id}/${path}`;
       }
-      
-      return `adventures/${adventure.id}/${path}`;
+    } catch (err) {
+      Helpers.logger.error(`Error importing image file ${path} : ${err.message}`);
     }
+
+    return path;
   }
   
   /**
