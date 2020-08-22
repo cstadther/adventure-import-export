@@ -117,17 +117,30 @@ export default class Helpers {
    * @returns {string} - Path to file within VTT
    */
   static async importImage(path, zip, adventure) {
-    if(path[0] === "*") {
-      // this file was flagged as core data, just replace name.
-      return path.replace(/\*/g, "");
-    } else {
-      let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
-      await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
-      const img = await zip.file(path).async("uint8array");
-      const i = new File([img], filename);
-      await FilePicker.upload("data", `adventures/${adventure.id}/${path.replace(filename, "")}`, i, { bucket: null });
-      return `adventures/${adventure.id}/${path}`;
+    try {
+      if(path[0] === "*") {
+        // this file was flagged as core data, just replace name.
+        return path.replace(/\*/g, "");
+      } else {
+        
+          if(!CONFIG.AIE.TEMPORARY.import[path]) {
+            let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
+            await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
+            const img = await zip.file(path).async("uint8array");
+            const i = new File([img], filename);
+            await FilePicker.upload("data", `adventures/${adventure.id}/${path.replace(filename, "")}`, i, { bucket: null });
+            CONFIG.AIE.TEMPORARY.import[path] = true;
+          } else {
+            Helpers.logger.debug(`File already imported ${path}`);  
+          }
+        
+        return `adventures/${adventure.id}/${path}`;
+      }
+    } catch (err) {
+      Helpers.logger.error(`Error importing image file ${path} : ${err.message}`);
     }
+
+    return path;
   }
   
   /**
@@ -274,7 +287,11 @@ export default class Helpers {
         if(folderData.parent !== null) {
           folderData.parent = CONFIG.AIE.TEMPORARY.folders[folderData.parent];
         } else {
-          folderData.parent = CONFIG.AIE.TEMPORARY.folders["null"];
+          if(adventure?.options?.folders) {
+            folderData.parent = CONFIG.AIE.TEMPORARY.folders["null"];
+          } else {
+            folderData.parent = CONFIG.AIE.TEMPORARY.folders[folderData.type];
+          }
         }
 
         newfolder = await Folder.create(folderData);
@@ -304,7 +321,7 @@ export default class Helpers {
       console.warn(`${CONFIG.AIE.module} | `, ...args);
     },
     error: (...args) => {
-      console.error(`${CONFIG.AIE.module} | `, ...args);
+      console.error(`${CONFIG.module} | `, ...args);
     }
   }
 

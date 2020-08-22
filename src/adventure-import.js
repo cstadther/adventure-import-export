@@ -50,230 +50,243 @@ export default class AdventureModuleImport extends FormApplication {
     const action = a.dataset.button;
     
     if(action === "import") {
-      $(".import-progress").toggleClass("import-hidden");
-      $(".aie-overlay").toggleClass("import-invalid");
-
-      const form = $("form.aie-importer-window")[0];
-
-      let zip;
-      if (form.data.files.length) {
-        zip = await Helpers.readBlobFromFile(form.data.files[0]).then(JSZip.loadAsync);
-      } else {
-        const selectedFile = $("#import-file").val();
-        zip = await fetch(`/${selectedFile}`) 
-          .then(function (response) {                       
-              if (response.status === 200 || response.status === 0) {
-                  return Promise.resolve(response.blob());
-              } else {
-                  return Promise.reject(new Error(response.statusText));
-              }
-          })
-          .then(JSZip.loadAsync);
-      }
-
-      const adventure = JSON.parse(await zip.file("adventure.json").async("text"));
-      let folders;
+      let importFilename;
       try {
-        folders = JSON.parse(await zip.file("folders.json").async("text"));
-      } catch (err) {
-        Helpers.logger.warn(`Folder structure file not found.`);
-      }
+        $(".import-progress").toggleClass("import-hidden");
+        $(".aie-overlay").toggleClass("import-invalid");
 
-      if(adventure.system !== game.data.system.data.name ) {
-        ui.notifications.error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
-        throw new Error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
-      }
+        const form = $("form.aie-importer-window")[0];
 
-      CONFIG.AIE.TEMPORARY = {
-        folders : {}
-      }
-
-      if(folders) {
-        const maintainFolders = adventure?.options?.folders;
-        let itemfolder = null;
-        if(!maintainFolders) {
-          itemfolder = game.folders.find(folder => {
-            return folder.data.name === adventure.name && folder.data.type === importType;
-          }); 
-
-          if(!itemfolder) {
-            Helpers.logger.debug(`Creating folder ${adventure.name} - ${importType}`);
-  
-            itemfolder = await Folder.create({
-              color: "#FF0000",
-              name : adventure.name,
-              parent : null,
-              type : importType
-            });
-          }
-
-          CONFIG.AIE.TEMPORARY.folders["null"] = itemfolder.data._id;
+        let zip;
+        if (form.data.files.length) {
+          importFilename = form.data.files[0].name;
+          zip = await Helpers.readBlobFromFile(form.data.files[0]).then(JSZip.loadAsync);
         } else {
-          CONFIG.AIE.TEMPORARY.folders["null"] = null;
+          const selectedFile = $("#import-file").val();
+          importFilename = selectedFile;
+          zip = await fetch(`/${selectedFile}`) 
+            .then(function (response) {                       
+                if (response.status === 200 || response.status === 0) {
+                    return Promise.resolve(response.blob());
+                } else {
+                    return Promise.reject(new Error(response.statusText));
+                }
+            })
+            .then(JSZip.loadAsync);
+        }
+
+        const adventure = JSON.parse(await zip.file("adventure.json").async("text"));
+        let folders;
+        try {
+          folders = JSON.parse(await zip.file("folders.json").async("text"));
+        } catch (err) {
+          Helpers.logger.warn(`Folder structure file not found.`);
+        }
+
+        if(adventure.system !== game.data.system.data.name ) {
+          ui.notifications.error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
+          throw new Error(`Invalid sysytem for Adventure ${adventure.name}.  Expects ${adventure.system}`);
+        }
+
+        CONFIG.AIE.TEMPORARY = {
+          folders : {},
+          import : {}
+        }
+
+        if(folders) {
+          const maintainFolders = adventure?.options?.folders;
+          let itemfolder = null;
+          if(!maintainFolders) {
+            const importTypes = ["Scene", "Actor", "Item", "JournalEntry", "RollTable"];
+            await Helpers.asyncForEach(importTypes, async importType => {
+              itemfolder = game.folders.find(folder => {
+                return folder.data.name === adventure.name && folder.data.type === importType;
+              }); 
+    
+              if(!itemfolder) {
+                Helpers.logger.debug(`Creating folder ${adventure.name} - ${importType}`);
+      
+                itemfolder = await Folder.create({
+                  color: "#FF0000",
+                  name : adventure.name,
+                  parent : null,
+                  type : importType
+                });
+              }
+    
+              CONFIG.AIE.TEMPORARY.folders[importType] = itemfolder.data._id;
+            })
+          } else {
+            CONFIG.AIE.TEMPORARY.folders["null"] = null;
+          }
+          
+          // the folder list could be out of order, we need to create all folders with parent null first
+          let firstLevelFolders = folders.filter(folder => { return folder.parent === null });
+          await Helpers.importFolder(itemfolder, firstLevelFolders, adventure, folders)
+        }
+
+        if(this._folderExists("scene", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading scenes`);
+          await this._importFile("scene", zip, adventure, folders);
+        }
+        if(this._folderExists("actor", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading actors`);
+          await this._importFile("actor", zip, adventure, folders);
+        }
+        if(this._folderExists("item", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading item`);
+          await this._importFile("item", zip, adventure, folders);
+        }
+        if(this._folderExists("journal", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading journal`);
+          await this._importFile("journal", zip, adventure, folders);
+        }
+        if(this._folderExists("table", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading table`);
+          await this._importFile("table", zip, adventure, folders);
+        }
+        if(this._folderExists("playlist", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading playlist`);
+          await this._importFile("playlist", zip, adventure, folders);
+        }
+        if(this._folderExists("compendium", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading compendium`);
+          await this._importCompendium("compendium", zip, adventure, folders);
+        }
+
+        if(this._itemsToRevisit.length > 0) {
+          await Helpers.asyncForEach(this._itemsToRevisit, async item => {
+            const obj = await fromUuid(item);
+            let rawData;
+            let updatedData = {};
+            switch (obj.entity) {
+              case "Scene":
+                // this is a scene we need to update links to all items 
+                await Helpers.asyncForEach(obj.data.tokens, async token => {
+                  if(token.actorId) {
+                    const actor = Helpers.findEntityByImportId("actors", token.actorId);
+                    if(actor) {
+                      await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                    }
+                  }
+                });
+                await Helpers.asyncForEach(obj.data.notes, async note => {
+                  if(note.entryId) {
+                    const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
+                    if(journalentry) {
+                      await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                    }
+                  }
+                });
+                let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
+                if(sceneJournal) {
+                  updatedData["journal"] = sceneJournal?._id;
+                }
+                let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
+                if(scenePlaylist) {
+                  updatedData["playlist"] = scenePlaylist?._id;
+                }
+                await obj.update(updatedData);
+                break;
+              default:
+                // this is where there is reference in one of the fields
+                rawData = JSON.stringify(obj.data);
+                const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
+                
+                const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
+                  let refType;
+
+                  console.log(match);
+
+                  switch(p1.replace(/\@/, "").toLowerCase()) {
+                    case "scene":
+                      refType = "scenes";
+                      break;
+                    case "journalentry":
+                      refType = "journal";
+                      break;
+                    case "rolltable":
+                      refType = "tables";
+                      break;
+                    case "actor":
+                      refType = "actors";
+                      break;
+                    case "item" :
+                      refType = "items";
+                      break;
+                  }
+
+                  let newObj = {  _id: p3 }
+
+                  if(p1 !== "@Compendium") {
+                    let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
+                    if(nonCompendiumItem) {
+                      newObj = nonCompendiumItem;
+                    }
+                  } else {
+                    newObj = {  _id: p3 } ;
+                    const [p, name, entryid] = p3.split("."); 
+                    try {
+                      const pack = await game.packs.get(`${p}.${name}`);
+                      let content = await pack.getContent();
+                        
+                      let compendiumItem = content.find(contentItem => {
+                        return contentItem.data.flags.importid === entryid;  
+                      });
+
+                      if(!compendiumItem) {
+                        await pack.getIndex();
+                        compendiumItem = pack.index.find(e => e.name === p6);
+                        newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
+                      } else {
+                        newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+                      }
+                    } catch (err) {
+                      Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
+                    }
+                  }
+
+                  return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
+                }
+
+                const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
+                const updatedDataUpdates = JSON.parse(updatedRawData);
+                const diff = Helpers.diff(obj.data, JSON.parse(updatedRawData));
+                
+                updatedData = Helpers.buildUpdateData(diff);
+                await obj.update(updatedData);
+            }
+          });
         }
         
-        // the folder list could be out of order, we need to create all folders with parent null first
-        let firstLevelFolders = folders.filter(folder => { return folder.parent === null });
-        await Helpers.importFolder(itemfolder, firstLevelFolders, adventure, folders)
-      }
+        $(".aie-overlay").toggleClass("import-invalid");
 
-      if(this._folderExists("scene", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading scenes`);
-        await this._importFile("scene", zip, adventure, folders);
-      }
-      if(this._folderExists("actor", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading actors`);
-        await this._importFile("actor", zip, adventure, folders);
-      }
-      if(this._folderExists("item", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading item`);
-        await this._importFile("item", zip, adventure, folders);
-      }
-      if(this._folderExists("journal", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading journal`);
-        await this._importFile("journal", zip, adventure, folders);
-      }
-      if(this._folderExists("table", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading table`);
-        await this._importFile("table", zip, adventure, folders);
-      }
-      if(this._folderExists("playlist", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading playlist`);
-        await this._importFile("playlist", zip, adventure, folders);
-      }
-      if(this._folderExists("compendium", zip)) {
-        Helpers.logger.debug(`${adventure.name} - Loading compendium`);
-        await this._importCompendium("compendium", zip, adventure, folders);
-      }
-
-      if(this._itemsToRevisit.length > 0) {
-        await Helpers.asyncForEach(this._itemsToRevisit, async item => {
-          const obj = await fromUuid(item);
-          let rawData;
-          let updatedData = {};
-          switch (obj.entity) {
-            case "Scene":
-              // this is a scene we need to update links to all items 
-              await Helpers.asyncForEach(obj.data.tokens, async token => {
-                if(token.actorId) {
-                  const actor = Helpers.findEntityByImportId("actors", token.actorId);
-                  if(actor) {
-                    await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
-                  }
-                }
-              });
-              await Helpers.asyncForEach(obj.data.notes, async note => {
-                if(note.entryId) {
-                  const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
-                  if(journalentry) {
-                    await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
-                  }
-                }
-              });
-              let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
-              if(sceneJournal) {
-                updatedData["journal"] = sceneJournal?._id;
-              }
-              let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
-              if(scenePlaylist) {
-                updatedData["playlist"] = scenePlaylist?._id;
-              }
-              await obj.update(updatedData);
-              break;
-            default:
-              // this is where there is reference in one of the fields
-              rawData = JSON.stringify(obj.data);
-              const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-              
-              const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
-                let refType;
-
-                console.log(match);
-
-                switch(p1.replace(/\@/, "").toLowerCase()) {
-                  case "scene":
-                    refType = "scenes";
-                    break;
-                  case "journalentry":
-                    refType = "journal";
-                    break;
-                  case "rolltable":
-                    refType = "tables";
-                    break;
-                  case "actor":
-                    refType = "actors";
-                    break;
-                  case "item" :
-                    refType = "items";
-                    break;
-                }
-
-                let newObj = {  _id: p3 }
-
-                if(p1 !== "@Compendium") {
-                  let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
-                  if(nonCompendiumItem) {
-                    newObj = nonCompendiumItem;
-                  }
-                } else {
-                  newObj = {  _id: p3 } ;
-                  const [p, name, entryid] = p3.split("."); 
-                  try {
-                    const pack = await game.packs.get(`${p}.${name}`);
-                    let content = await pack.getContent();
-                      
-                    let compendiumItem = content.find(contentItem => {
-                      return contentItem.data.flags.importid === entryid;  
-                    });
-
-                    if(!compendiumItem) {
-                      await pack.getIndex();
-                      compendiumItem = pack.index.find(e => e.name === p6);
-                      newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
-                    } else {
-                      newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
-                    }
-                  } catch (err) {
-                    Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
-                  }
-                }
-
-                return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
-              }
-
-              const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-              const updatedDataUpdates = JSON.parse(updatedRawData);
-              const diff = Helpers.diff(obj.data, JSON.parse(updatedRawData));
-              
-              updatedData = Helpers.buildUpdateData(diff);
-              await obj.update(updatedData);
-          }
-        });
-      }
-      
-      $(".aie-overlay").toggleClass("import-invalid");
-
-      const title = `Successful Import of ${adventure.name}`;
-      new Dialog(
-        {
-          title: title,
-          content: {
-            adventure
-          },
-          buttons: {
-            two: {
-              label: "Ok",
+        const title = `Successful Import of ${adventure.name}`;
+        new Dialog(
+          {
+            title: title,
+            content: {
+              adventure
+            },
+            buttons: {
+              two: {
+                label: "Ok",
+              },
             },
           },
-        },
-        {
-          classes: ["dialog", "adventure-import-export"],
-          template: "modules/adventure-import-export/templates/adventure-import-complete.html",
-        }
-      ).render(true);
+          {
+            classes: ["dialog", "adventure-import-export"],
+            template: "modules/adventure-import-export/templates/adventure-import-complete.html",
+          }
+        ).render(true);
 
-      CONFIG.AIE.TEMPORARY = {}
-      this.close();
+        CONFIG.AIE.TEMPORARY = {}
+        this.close();
+      } catch (err) {
+        ui.notifications.error(`There was an error importing ${importFilename}`);
+        Helpers.logger.error(`Error importing file ${importFilename}`, err);
+        this.close();
+      }
     }
   }
    
@@ -432,7 +445,11 @@ export default class AdventureModuleImport extends FormApplication {
           data.folder = CONFIG.AIE.TEMPORARY.folders[data.folder];
         } else {
           Helpers.logger.debug(`Adding data to subfolder importkey = ${data.folder}, folder = ${CONFIG.AIE.TEMPORARY.folders["null"]}`);
-          data.folder = CONFIG.AIE.TEMPORARY.folders["null"];
+          if(adventure?.options?.folders) {
+            data.folder = CONFIG.AIE.TEMPORARY.folders["null"];
+          } else {
+            data.folder = CONFIG.AIE.TEMPORARY.folders[importType];
+          }
         }
       }
 
