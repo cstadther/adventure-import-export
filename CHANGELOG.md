@@ -1,3 +1,4 @@
+* 2020/08/21 - Fixed issue where sometimes path is an empty string during import image function.
 * 2020/08/21 - Added check for already imported file, if already imported, doesn't try reimporting.
 * 2020/08/21 - Fix for issue where using adventure folder, base folders were not being created for each item type.
 * 2020/08/20 - Verified module with version Foundry 0.7.1
