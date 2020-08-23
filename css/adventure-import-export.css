@@ -189,6 +189,39 @@
   left: 0;
 }
 
+.adventure-import-export .aie-working {
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 135px;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+.adventure-import-export .aie-working i {
+  transform: rotate(360deg);
+  -webkit-animation: roll 3s infinite;
+  animation: roll 3s infinite;
+}
+
+@-webkit-keyframes roll {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes roll {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .adventure-import-export .warnings {
   margin: 10px 0;
 }
