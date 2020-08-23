@@ -2,7 +2,7 @@
   "name": "adventure-import-export",
   "title": "Adventure Importer / Exporter",
   "description": "Allows import and export of adventures (including all Foundy VTT Assets).",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "author": "Chris Stadther",
   "minimumCoreVersion": "0.6.0",
   "compatibleCoreVersion": "0.6.5",
@@ -31,6 +31,6 @@
   "packs": [],
   "url": "https://github.com/cstadther/adventure-import-export",
   "manifest": "https://raw.githubusercontent.com/cstadther/adventure-import-export/master/module.json",
-  "download": "https://github.com/cstadther/adventure-import-export/archive/0.4.7.zip",
+  "download": "https://github.com/cstadther/adventure-import-export/archive/0.4.8.zip",
   "license" : "LICENSE"
 }

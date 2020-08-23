@@ -231,21 +231,25 @@ export default class AdventureModuleImport extends FormApplication {
                       const [p, name, entryid] = p3.split("."); 
                       try {
                         const pack = await game.packs.get(`${p}.${name}`);
-                        let content = await pack.getContent();
+                        if(!pack.locked && !pack.private) {
+                          let content = await pack.getContent();
                           
-                        let compendiumItem = content.find(contentItem => {
-                          return contentItem.data.flags.importid === entryid;  
-                        });
-  
-                        if(!compendiumItem) {
-                          await pack.getIndex();
-                          compendiumItem = pack.index.find(e => e.name === p6);
-                          newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
-                        } else {
-                          newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+                          let compendiumItem = content.find(contentItem => {
+                            return contentItem.data.flags.importid === entryid;  
+                          });
+    
+                          if(!compendiumItem) {
+                            await pack.getIndex();
+                            compendiumItem = pack.index.find(e => e.name === p6);
+                            if(compendiumItem) {
+                              newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
+                            }
+                          } else {
+                            newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+                          }  
                         }
                       } catch (err) {
-                        Helpers.logger.error(`Error trying to find compendium item to fix link`, err);
+                        Helpers.logger.warn(`Unable to find find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
                       }
                     }
   
@@ -261,8 +265,12 @@ export default class AdventureModuleImport extends FormApplication {
 
                     for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
                       if(diff.items[i] && Object.keys(diff.items[i].data).length > 0) {
-                        Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, diff.items[i].data)
-                        await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, data : diff.items[i].data});
+                        const itemUpdateDate = Helpers.buildUpdateData({ data: diff.items[i].data });
+
+                        if(Object.keys(itemUpdateDate).length > 0) {
+                          Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
+                          await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+                        }
                       }
                     }
 
@@ -303,6 +311,7 @@ export default class AdventureModuleImport extends FormApplication {
         CONFIG.AIE.TEMPORARY = {}
         this.close();
       } catch (err) {
+        $(".aie-overlay").toggleClass("import-invalid");
         ui.notifications.error(`There was an error importing ${importFilename}`);
         Helpers.logger.error(`Error importing file ${importFilename}`, err);
         this.close();
