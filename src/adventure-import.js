@@ -156,135 +156,173 @@ export default class AdventureModuleImport extends FormApplication {
           await this._importCompendium("compendium", zip, adventure, folders);
         }
 
-        if(this._itemsToRevisit.length > 0) {
-          await Helpers.asyncForEach(this._itemsToRevisit, async item => {
-            try {
-              const obj = await fromUuid(item);
-              let rawData;
-              let updatedData = {};
-              switch (obj.entity) {
-                case "Scene":
-                  // this is a scene we need to update links to all items 
-                  await Helpers.asyncForEach(obj.data.tokens, async token => {
-                    if(token.actorId) {
-                      const actor = Helpers.findEntityByImportId("actors", token.actorId);
-                      if(actor) {
-                        await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+        try {
+          if(this._itemsToRevisit.length > 0) {
+            // start timer 
+            const to_timer = setTimeout(() => { 
+              Helpers.logger.warn(`Reference update timed out.`); 
+              const title = `Successful Import of ${adventure.name}`;
+              new Dialog(
+                {
+                  title: title,
+                  content: {
+                    adventure
+                  },
+                  buttons: {
+                    two: {
+                      label: "Ok",
+                    },
+                  },
+                },
+                {
+                  classes: ["dialog", "adventure-import-export"],
+                  template: "modules/adventure-import-export/templates/adventure-import-complete.html",
+                }
+              ).render(true);
+              this.close();
+            }, 60000) 
+
+            // $(".aie-overlay div").toggleClass("import-hidden");
+
+            let totalcount = 0;
+            let currentcount = 0;
+
+            await Helpers.asyncForEach(this._itemsToRevisit, async item => {
+              try {
+                const obj = await fromUuid(item);
+                let rawData;
+                let updatedData = {};
+                switch (obj.entity) {
+                  case "Scene":
+                    // this is a scene we need to update links to all items 
+                    await Helpers.asyncForEach(obj.data.tokens, async token => {
+                      if(token.actorId) {
+                        const actor = Helpers.findEntityByImportId("actors", token.actorId);
+                        if(actor) {
+                          await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                        }
                       }
-                    }
-                  });
-                  await Helpers.asyncForEach(obj.data.notes, async note => {
-                    if(note.entryId) {
-                      const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
-                      if(journalentry) {
-                        await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                    });
+                    await Helpers.asyncForEach(obj.data.notes, async note => {
+                      if(note.entryId) {
+                        const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
+                        if(journalentry) {
+                          await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                        }
                       }
+                    });
+                    let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
+                    if(sceneJournal) {
+                      updatedData["journal"] = sceneJournal?._id;
                     }
-                  });
-                  let sceneJournal = Helpers.findEntityByImportId("journal", obj.data.journal);
-                  if(sceneJournal) {
-                    updatedData["journal"] = sceneJournal?._id;
-                  }
-                  let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
-                  if(scenePlaylist) {
-                    updatedData["playlist"] = scenePlaylist?._id;
-                  }
-                  await obj.update(updatedData);
-                  break;
-                default:
-                  // this is where there is reference in one of the fields
-                  rawData = JSON.stringify(obj.data);
-                  const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-                  
-                  const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
-                    let refType;
-  
-                    console.log(match);
-  
-                    switch(p1.replace(/\@/, "").toLowerCase()) {
-                      case "scene":
-                        refType = "scenes";
-                        break;
-                      case "journalentry":
-                        refType = "journal";
-                        break;
-                      case "rolltable":
-                        refType = "tables";
-                        break;
-                      case "actor":
-                        refType = "actors";
-                        break;
-                      case "item" :
-                        refType = "items";
-                        break;
+                    let scenePlaylist = Helpers.findEntityByImportId("playlists", obj.data.playlist);
+                    if(scenePlaylist) {
+                      updatedData["playlist"] = scenePlaylist?._id;
                     }
-  
-                    let newObj = {  _id: p3 }
-  
-                    if(p1 !== "@Compendium") {
-                      let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
-                      if(nonCompendiumItem) {
-                        newObj = nonCompendiumItem;
-                      }
-                    } else {
-                      newObj = {  _id: p3 } ;
-                      const [p, name, entryid] = p3.split("."); 
-                      try {
-                        const pack = await game.packs.get(`${p}.${name}`);
-                        if(!pack.locked && !pack.private) {
-                          let content = await pack.getContent();
-                          
-                          let compendiumItem = content.find(contentItem => {
-                            return contentItem.data.flags.importid === entryid;  
-                          });
+                    await obj.update(updatedData);
+                    break;
+                  default:
+                    // this is where there is reference in one of the fields
+                    rawData = JSON.stringify(obj.data);
+                    const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
+                    
+                    const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
+                      let refType;
     
-                          if(!compendiumItem) {
-                            await pack.getIndex();
-                            compendiumItem = pack.index.find(e => e.name === p6);
-                            if(compendiumItem) {
-                              newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
-                            }
-                          } else {
-                            newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
-                          }  
-                        }
-                      } catch (err) {
-                        Helpers.logger.warn(`Unable to find find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
+                      console.log(match);
+    
+                      switch(p1.replace(/\@/, "").toLowerCase()) {
+                        case "scene":
+                          refType = "scenes";
+                          break;
+                        case "journalentry":
+                          refType = "journal";
+                          break;
+                        case "rolltable":
+                          refType = "tables";
+                          break;
+                        case "actor":
+                          refType = "actors";
+                          break;
+                        case "item" :
+                          refType = "items";
+                          break;
                       }
-                    }
-  
-                    return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
-                  }
-  
-                  const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-                  const updatedDataUpdates = JSON.parse(updatedRawData);
-                  const diff = Helpers.diff(obj.data, updatedDataUpdates);
-                  
-                  if(diff.items && obj.entity === "Actor") {
-                    // the object has embedded items that need to be updated seperately.
-
-                    for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
-                      if(diff.items[i] && Object.keys(diff.items[i].data).length > 0) {
-                        const itemUpdateDate = Helpers.buildUpdateData({ data: diff.items[i].data });
-
-                        if(Object.keys(itemUpdateDate).length > 0) {
-                          Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
-                          await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+    
+                      let newObj = {  _id: p3 }
+    
+                      if(p1 !== "@Compendium") {
+                        let nonCompendiumItem = Helpers.findEntityByImportId(refType, p3);
+                        if(nonCompendiumItem) {
+                          newObj = nonCompendiumItem;
+                        }
+                      } else {
+                        newObj = {  _id: p3 } ;
+                        const [p, name, entryid] = p3.split("."); 
+                        try {
+                          const pack = await game.packs.get(`${p}.${name}`);
+                          if(!pack.locked && !pack.private) {
+                            let content = await pack.getContent();
+                            
+                            let compendiumItem = content.find(contentItem => {
+                              return contentItem.data.flags.importid === entryid;  
+                            });
+      
+                            if(!compendiumItem) {
+                              await pack.getIndex();
+                              compendiumItem = pack.index.find(e => e.name === p6);
+                              if(compendiumItem) {
+                                newObj["_id"] = `${p}.${name}.${compendiumItem._id}`;
+                              }
+                            } else {
+                              newObj["_id"] = `${p}.${name}.${compendiumItem.data._id}`;
+                            }  
+                          }
+                        } catch (err) {
+                          Helpers.logger.warn(`Unable to find find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
                         }
                       }
+    
+                      return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
+                    }
+    
+                    const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
+                    const updatedDataUpdates = JSON.parse(updatedRawData);
+                    const diff = Helpers.diff(obj.data, updatedDataUpdates);
+                    
+                    if(diff.items && obj.entity === "Actor") {
+                      // the object has embedded items that need to be updated seperately.
+
+                      for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
+                        if(diff.items[i] && Object.keys(diff.items[i].data).length > 0) {
+                          const itemUpdateDate = Helpers.buildUpdateData({ data: diff.items[i].data });
+
+                          if(Object.keys(itemUpdateDate).length > 0) {
+                            Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
+                            await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+                          }
+                        }
+                      }
+
+                      delete diff.items;
                     }
 
-                    delete diff.items;
-                  }
+                    updatedData = Helpers.buildUpdateData(diff);
 
-                  updatedData = Helpers.buildUpdateData(diff);
+                    await obj.update(updatedData);
+                } 
+              } catch (err) {
+                Helpers.logger.error(`Error updating references for object ${item}`, err);
+              }
+              currentcount +=1;
+              this._updateProgress(totalcount, currentcount, "References");
+            });
 
-                  await obj.update(updatedData);
-              } 
-            } catch (err) {
-              Helpers.logger.error(`Error updating references for object ${item}`, err);
-            }
-          });
+            clearTimeout(to_timer);
+            // $(".aie-overlay div").toggleClass("import-hidden");
+          }
+        } catch (err) {
+          Helpers.logger.error(`Error updating references for object ${item}`, err);
         }
         
         $(".aie-overlay").toggleClass("import-invalid");

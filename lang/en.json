@@ -18,5 +18,7 @@
   "AIE.Import"        : "Import Adventure",
   "AIE.Working"       : "Working",
   "AIE.ActiveModules" : "The following modules were active:",
-  "AIE.ExportOptions" : "Export Options"
+  "AIE.ExportOptions" : "Export Options",
+  "AIE.References"    : "Updating References",
+  "AIE.RollTable"     : "Roll Table"
 }
