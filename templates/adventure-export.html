@@ -80,6 +80,18 @@
       {{/each}}
     </div>  
 
+    <div class="aie-accordion"><input type="checkbox" value="macros"/> {{localize "AIE.Macros"}}</div>
+    <div class="panel grid grid-2col">
+      {{#each data.macros as |macro id|}}
+      <div>
+        <label>
+          <input type="checkbox" value="{{macro.key}}" data-type="macro"/>
+          <span>{{macro.name}}</span>
+        </label>
+      </div>
+      {{/each}}
+    </div>  
+
     <div class="aie-accordion"><input type="checkbox" value="compendiums"/> {{localize "AIE.Compendiums"}}</div>
     <div class="panel grid grid-2col">
       {{#each data.compendiums as |compendium id|}}

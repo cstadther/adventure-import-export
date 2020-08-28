@@ -20,5 +20,6 @@
   "AIE.ActiveModules" : "The following modules were active:",
   "AIE.ExportOptions" : "Export Options",
   "AIE.References"    : "Updating References",
-  "AIE.RollTable"     : "Roll Table"
+  "AIE.RollTable"     : "Roll Table",
+  "AIE.Macros"        : "Macros"
 }
