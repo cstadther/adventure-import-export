@@ -1,3 +1,4 @@
+* 2020/08/28 - Fixed but with Actor compendium export, was not setting token images correctly, so import was trying to find files that did not exist.
 * 2020/08/28 - Enhancement #43 - Updated the upload folder path for imported assets, will now be placed in a folder named `adventures\<adventure name>` under the world folder.
 * 2020/08/28 - Bug Fix #72 - Fixed updating references that are stored as a link instead of foundry code link.
 * 2020/08/23 - Added additional progress bar animation to show Update References.  Added 60 second timeout if something happens during reference update.

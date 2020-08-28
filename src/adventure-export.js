@@ -209,6 +209,12 @@ export default class AdventureModuleExport extends FormApplication {
   
             await Helpers.asyncForEach(compendiumData, async (item) => {
               item.img = await Helpers.exportImage(item.img, type, item._id, zip);
+              if(item.thumb) {
+                item.thumb = await Helpers.exportImage(item.thumb, type, item._id, zip);
+              }
+              if(item?.token?.img) {
+                item.token.img = await Helpers.exportImage(item.token.img, type, item._id, zip);
+              }
               currentcount +=1;
               this._updateProgress(totalcount, currentcount);
             })
