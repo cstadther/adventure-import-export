@@ -68,13 +68,20 @@ export default class AdventureModuleExport extends FormApplication {
         }
       }
     });
+
+    data.macros = game.macros.map(macro => {
+      return {
+        key : macro.data._id,
+        name : macro.name
+      }
+    })
     
     let warnings = [];
 
     let isTooDeep = game.folders.filter(folder => { return folder.depth === 3 }).length > 0;
 
     if(isTooDeep) {
-      warnings.push(`There are folders at the max depth, this folders will not export correctly as all assets are placed under an adventure folder when imported. The maximum depth allowed is 2.`);
+      warnings.push(`There are folders at the max depth, if you wish to retain the folder structure be sure to check the option.`);
     }
     
     return {
@@ -223,6 +230,9 @@ export default class AdventureModuleExport extends FormApplication {
               items : compendiumData
             });
             
+            break;
+          case "macro":
+            obj = await game.macros.get(id);
             break;
         }
         if(type !== "compendium" && type !== "playlist" && type !== "table" && type !== "scene") {

@@ -157,6 +157,10 @@ export default class AdventureModuleImport extends FormApplication {
           Helpers.logger.debug(`${adventure.name} - Loading compendium`);
           await this._importCompendium("compendium", zip, adventure, folders);
         }
+        if(this._folderExists("macro", zip)) {
+          Helpers.logger.debug(`${adventure.name} - Loading macro`);
+          await this._importFile("macro", zip, adventure, folders);
+        }
 
         try {
           if(this._itemsToRevisit.length > 0) {
@@ -634,6 +638,14 @@ export default class AdventureModuleImport extends FormApplication {
           if(!Helpers.findEntityByImportId("playlists", data._id)) {
             data.name = `${adventure.name}.${data.name}`;
             await Playlist.create(data);
+          }
+        break;
+        case "Macro": 
+          if(!Helpers.findEntityByImportId("macros", data._id)) {
+            let macro = await Macro.create(data);
+            if(needRevisit) {
+              this._itemsToRevisit.push(`Macro.${macro.data._id}`);
+            }
           }
         break;
       }
