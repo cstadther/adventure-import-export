@@ -1,4 +1,5 @@
 
+* 2020/08/28 - Bug Fix #72 - Fixed updating references that are stored as a link instead of foundry code link.
 * 2020/08/23 - Added additional progress bar animation to show Update References.  Added 60 second timeout if something happens during reference update.
 * 2020/08/21 - Display warning if trying to access compendium that is not visible or locked, and don't try to update reference.  Only update embedded object if differences are detected.
 * 2020/08/21 - Fixed updating embedded objects on Actors.

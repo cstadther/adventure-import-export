@@ -2,6 +2,9 @@ import Helpers from "./common.js";
 export default class AdventureModuleImport extends FormApplication {
   /** @override */
   static get defaultOptions() {
+    this.pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
+    this.altpattern = /((data-entity)="([a-zA-Z]*)"|(data-pack)="([[\S\.]*)") data-id="([a-zA-z0-9]*)">(.*)<\/a>/gmi
+
     return mergeObject(super.defaultOptions, {
       id: "adventure-import",
       classes: ["adventure-import-export"],
@@ -36,7 +39,6 @@ export default class AdventureModuleImport extends FormApplication {
     };
   
   }
-
 
   /** @override */
   activateListeners(html) {
@@ -158,36 +160,32 @@ export default class AdventureModuleImport extends FormApplication {
 
         try {
           if(this._itemsToRevisit.length > 0) {
-            // start timer 
-            const to_timer = setTimeout(() => { 
-              Helpers.logger.warn(`Reference update timed out.`); 
-              const title = `Successful Import of ${adventure.name}`;
-              new Dialog(
-                {
-                  title: title,
-                  content: {
-                    adventure
-                  },
-                  buttons: {
-                    two: {
-                      label: "Ok",
-                    },
-                  },
-                },
-                {
-                  classes: ["dialog", "adventure-import-export"],
-                  template: "modules/adventure-import-export/templates/adventure-import-complete.html",
-                }
-              ).render(true);
-              this.close();
-            }, 60000) 
-
-            // $(".aie-overlay div").toggleClass("import-hidden");
-
-            let totalcount = 0;
+            let totalcount = this._itemsToRevisit.length;
             let currentcount = 0;
 
             await Helpers.asyncForEach(this._itemsToRevisit, async item => {
+              const to_timer = setTimeout(() => { 
+                Helpers.logger.warn(`Reference update timed out.`); 
+                const title = `Successful Import of ${adventure.name}`;
+                new Dialog(
+                  {
+                    title: title,
+                    content: {
+                      adventure
+                    },
+                    buttons: {
+                      two: {
+                        label: "Ok",
+                      },
+                    },
+                  },
+                  {
+                    classes: ["dialog", "adventure-import-export"],
+                    template: "modules/adventure-import-export/templates/adventure-import-complete.html",
+                  }
+                ).render(true);
+                this.close();
+              }, 60000) 
               try {
                 const obj = await fromUuid(item);
                 let rawData;
@@ -225,12 +223,10 @@ export default class AdventureModuleImport extends FormApplication {
                     // this is where there is reference in one of the fields
                     rawData = JSON.stringify(obj.data);
                     const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
+                    const altpattern = /((data-entity)=\\\"([a-zA-Z]*)\\\"|(data-pack)=\\\"([[\S\.]*)\\\") data-id=\\\"([a-zA-z0-9]*)\\\">(.*?)<\/a>/gmi
                     
                     const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
                       let refType;
-    
-                      console.log(match);
-    
                       switch(p1.replace(/\@/, "").toLowerCase()) {
                         case "scene":
                           refType = "scenes";
@@ -285,9 +281,65 @@ export default class AdventureModuleImport extends FormApplication {
     
                       return [p1, p2, newObj._id, p4, p5, p6, p7].join("");
                     }
+
+                    const altReferenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
+                      console.log(match);
+                      let refType;
+                      let newObj = { _id : p6 };
+                      if(p2 && p2.toLowerCase() === "data-entity") {
+                        switch(p3.toLowerCase()) {
+                          case "scene":
+                            refType = "scenes";
+                            break;
+                          case "journalentry":
+                            refType = "journal";
+                            break;
+                          case "rolltable":
+                            refType = "tables";
+                            break;
+                          case "actor":
+                            refType = "actors";
+                            break;
+                          case "item" :
+                            refType = "items";
+                            break;
+                        }
+                        let nonCompendiumItem = Helpers.findEntityByImportId(refType, p6);
+                        if(nonCompendiumItem) {
+                          newObj = nonCompendiumItem;
+                        }
+                      } else if (p4.toLowerCase() === "data-pack") {
+                        try {
+                          const pack = await game.packs.get(p5);
+                          if(!pack.locked && !pack.private) {
+                            let content = await pack.getContent();
+                              
+                            let compendiumItem = content.find(contentItem => {
+                              return contentItem.data.flags.importid === p6;  
+                            });
+
+                            if(!compendiumItem) {
+                              await pack.getIndex();
+                              compendiumItem = pack.index.find(e => e.name === p7);
+                              if(compendiumItem) {
+                                newObj["_id"] = compendiumItem._id;
+                              }
+                            } else {
+                              newObj["_id"] = compendiumItem.data._id;
+                            } 
+                          } 
+                        } catch (err) {
+                          Helpers.logger.warn(`Unable to find find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
+                        }
+
+                        console.log(`Replacing ${p6} with ${newObj._id} for ${p7}`);
+                        return [p1, " data-id='", newObj._id, "'>", p7, "</a>"].join("");
+                      }
+                    }
     
                     const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-                    const updatedDataUpdates = JSON.parse(updatedRawData);
+                    const secondPassRawData = await Helpers.replaceAsync(updatedRawData, altpattern, altReferenceUpdater);
+                    const updatedDataUpdates = JSON.parse(secondPassRawData);
                     const diff = Helpers.diff(obj.data, updatedDataUpdates);
                     
                     if(diff.items && obj.entity === "Actor") {
@@ -316,10 +368,8 @@ export default class AdventureModuleImport extends FormApplication {
               }
               currentcount +=1;
               this._updateProgress(totalcount, currentcount, "References");
+              clearTimeout(to_timer);
             });
-
-            clearTimeout(to_timer);
-            // $(".aie-overlay div").toggleClass("import-hidden");
           }
         } catch (err) {
           Helpers.logger.error(`Error updating references for object ${item}`, err);
@@ -440,8 +490,9 @@ export default class AdventureModuleImport extends FormApplication {
         if(!entry) {
           let compendiumItem = await pack.importEntity(obj);
 
-          let pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])/gmi
-          if(JSON.stringify(item).match(pattern)) {
+          //let pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])/gmi
+          
+          if(JSON.stringify(item).match(this.pattern) || JSON.stringify(item).match(this.altpattern)) {
             this._itemsToRevisit.push(`Compendium.${pack.metadata.package}.${pack.metadata.name}.${compendiumItem.data._id}`);
           }
         } 
@@ -477,8 +528,8 @@ export default class AdventureModuleImport extends FormApplication {
 
       let needRevisit = false;
 
-      let pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])/gmi
-      if(rawdata.match(pattern)) {
+      //let pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])/gmi
+      if(rawdata.match(this.pattern) || rawdata.match(this.altpattern)) {
         needRevisit = true;
       }
 
