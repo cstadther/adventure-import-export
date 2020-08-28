@@ -122,18 +122,20 @@ export default class Helpers {
         // this file was flagged as core data, just replace name.
         return path.replace(/\*/g, "");
       } else {
-          if(!CONFIG.AIE.TEMPORARY.import[path]) {
-            let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
-            await Helpers.verifyPath("data", `adventures/${adventure.id}/${path.replace(filename, "")}`);
-            const img = await zip.file(path).async("uint8array");
-            const i = new File([img], filename);
-            await FilePicker.upload("data", `adventures/${adventure.id}/${path.replace(filename, "")}`, i, { bucket: null });
-            CONFIG.AIE.TEMPORARY.import[path] = true;
-          } else {
-            Helpers.logger.debug(`File already imported ${path}`);  
-          }
+        let adventurePath = (adventure.name).replace(/[^a-z0-9]/gi, '_');
+        if(!CONFIG.AIE.TEMPORARY.import[path]) {
+          let filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
+          
+          await Helpers.verifyPath("data", `worlds/${game.world.id}/adventures/${adventurePath}/${path.replace(filename, "")}`);
+          const img = await zip.file(path).async("uint8array");
+          const i = new File([img], filename);
+          await FilePicker.upload("data", `worlds/${game.world.id}/adventures/${adventurePath}/${path.replace(filename, "")}`, i, { bucket: null });
+          CONFIG.AIE.TEMPORARY.import[path] = true;
+        } else {
+          Helpers.logger.debug(`File already imported ${path}`);  
+        }
         
-        return `adventures/${adventure.id}/${path}`;
+        return `worlds/${game.world.id}/adventures/${adventurePath}/${path}`;
       }
     } catch (err) {
       Helpers.logger.error(`Error importing image file ${path} : ${err.message}`);
