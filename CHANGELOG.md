@@ -1,3 +1,4 @@
+* 2020/09/02 - Enhancement - Removed UI Notification from file upload during import.
 * 2020/08/28 - Enhancement #73 - Added macro export/import.
 * 2020/08/28 - Fixed but with Actor compendium export, was not setting token images correctly, so import was trying to find files that did not exist.
 * 2020/08/28 - Enhancement #43 - Updated the upload folder path for imported assets, will now be placed in a folder named `adventures\<adventure name>` under the world folder.
