@@ -129,7 +129,7 @@ export default class Helpers {
           await Helpers.verifyPath("data", `worlds/${game.world.id}/adventures/${adventurePath}/${path.replace(filename, "")}`);
           const img = await zip.file(path).async("uint8array");
           const i = new File([img], filename);
-          await FilePicker.upload("data", `worlds/${game.world.id}/adventures/${adventurePath}/${path.replace(filename, "")}`, i, { bucket: null });
+          await Helpers.UploadFile("data", `worlds/${game.world.id}/adventures/${adventurePath}/${path.replace(filename, "")}`, i, { bucket: null })
           CONFIG.AIE.TEMPORARY.import[path] = true;
         } else {
           Helpers.logger.debug(`File already imported ${path}`);  
@@ -308,6 +308,29 @@ export default class Helpers {
       } 
     });
   }
+
+  /**
+   * Uploads a file to Foundry without the UI Notification
+   * @param  {string} source
+   * @param  {string} path
+   * @param  {blog} file
+   * @param  {object} options
+   */
+  static async UploadFile(source, path, file, options) {
+    const fd = new FormData();
+    fd.set("source", source);
+    fd.set("target", path);
+    fd.set("upload", file);
+    Object.entries(options).forEach((o) => fd.set(...o));
+
+    const request = await fetch(FilePicker.uploadURL, { method: "POST", body: fd });
+    if (request.status === 413) {
+      return ui.notifications.error(game.i18n.localize("FILES.ErrorTooLarge"));
+    } else if (request.status !== 200) {
+      return ui.notifications.error(game.i18n.localize("FILES.ErrorSomethingWrong"));
+    }
+  }
+
 
   /** LOGGER */
 
