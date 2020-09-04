@@ -346,7 +346,7 @@ export default class AdventureModuleImport extends FormApplication {
                     const updatedDataUpdates = JSON.parse(secondPassRawData);
                     const diff = Helpers.diff(obj.data, updatedDataUpdates);
                     
-                    if(diff.items && obj.entity === "Actor") {
+                    if(diff.items && obj.entity === "Actor" && diff.items.length > 0) {
                       // the object has embedded items that need to be updated seperately.
 
                       for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
@@ -368,7 +368,7 @@ export default class AdventureModuleImport extends FormApplication {
                     await obj.update(updatedData);
                 } 
               } catch (err) {
-                Helpers.logger.error(`Error updating references for object ${item}`, err);
+                Helpers.logger.warn(`Error updating references for object ${item}`, err);
               }
               currentcount +=1;
               this._updateProgress(totalcount, currentcount, "References");
@@ -376,7 +376,7 @@ export default class AdventureModuleImport extends FormApplication {
             });
           }
         } catch (err) {
-          Helpers.logger.error(`Error updating references for object ${item}`, err);
+          Helpers.logger.warn(`Error during reference update for object ${item}`, err);
         }
         
         $(".aie-overlay").toggleClass("import-invalid");
@@ -544,7 +544,32 @@ export default class AdventureModuleImport extends FormApplication {
         data.thumb = await Helpers.importImage(data.thumb, zip, adventure);
       }
       if(data?.token?.img) {
-        data.token.img = await Helpers.importImage(data.token.img, zip, adventure);
+        if(data?.token?.randomImg) {
+          const imgFilepaths = data.token.img.split("/");
+          const imgFilename = (imgFilepaths.reverse())[0];
+          const imgFilepath = data.token.img.replace(imgFilename, "");
+
+          const filesToUpload = Object.values(zip.files).filter((file) => {
+            return !file.dir && file.name.includes(imgFilepath);
+          });
+
+          let adventurePath = (adventure.name).replace(/[^a-z0-9]/gi, '_');
+          
+          data.token.img = `worlds/${game.world.id}/adventures/${adventurePath}/${data.token.img}`
+
+          if(filesToUpload.length > 0) {
+            totalcount += filesToUpload.length;
+
+            await Helpers.asyncForEach(filesToUpload, async file => {
+              await Helpers.importImage(file.name, zip, adventure);
+              currentcount +=1;
+              this._updateProgress(totalcount, currentcount, importType);
+            });
+          }
+
+        } else {
+          data.token.img = await Helpers.importImage(data.token.img, zip, adventure);
+        }
       }
 
       if(typeName === "Playlist") {
