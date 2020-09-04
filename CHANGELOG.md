@@ -1,3 +1,4 @@
+* 2020/09/04 - Bug Fix #90 - Export/Import now handles wildcard image randomizer.
 * 2020/09/02 - Enhancement - Removed UI Notification from file upload during import.
 * 2020/08/28 - Enhancement #73 - Added macro export/import.
 * 2020/08/28 - Fixed but with Actor compendium export, was not setting token images correctly, so import was trying to find files that did not exist.

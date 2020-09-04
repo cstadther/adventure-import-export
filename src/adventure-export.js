@@ -243,8 +243,40 @@ export default class AdventureModuleExport extends FormApplication {
             exportData.thumb = await Helpers.exportImage(exportData.thumb, type, id, zip, "thumb");
           }
           if(exportData?.token?.img) {
-            exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");
-          }
+            if(exportData?.token?.randomImg) {
+              // we need to grab all images that match the string.
+              const imgFilepaths = exportData.token.img.split("/");
+              const imgFilename = (imgFilepaths.reverse())[0];
+              const imgFilepath = exportData.token.img.replace(imgFilename, "");
+
+              let wildcard = false;
+              let extensions = [];
+              if(imgFilename.includes("*")) {
+                wildcard = true;
+                if(imgFilename.includes("*.")) {
+
+                  extensions.push(imgFilename.replace("*.", "."));
+                }
+              }
+              const filestoexport = await FilePicker.browse("data", exportData.token.img, {bucket:null, extensions, wildcard});
+              Helpers.logger.debug(`Found wildcard token image for ${exportData.name}, uploading ${filestoexport.files.length} files`);
+
+              exportData.token.img = `${type}/token/${id}/${imgFilename}`;
+
+              totalcount += filestoexport.files.length;
+
+              await Helpers.asyncForEach(filestoexport.files, async (file) => {
+                await Helpers.exportImage(file, type, id, zip, "token");  
+                currentcount += 1;
+                this._updateProgress(totalcount, currentcount);
+              });
+
+            } else {
+              exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");  
+            }
+          } 
+
+
           data = Helpers.exportToJSON(exportData)
         } 
         zip.folder(type).file(`${id}.json`, data);
