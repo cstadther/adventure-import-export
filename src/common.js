@@ -92,8 +92,6 @@ export default class Helpers {
       } else {
         let isDataImage = true;
         try {
-          // check to see if we can find the image in the data area
-          await FilePicker.browse("data", itempath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
           const img = await JSZipUtils.getBinaryContent(itempath);
           const filename = path.replace(/^.*[\\\/]/, '')
   
