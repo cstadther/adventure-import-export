@@ -359,9 +359,10 @@ export default class AdventureModuleImport extends FormApplication {
                           }
                         }
                       }
-
-                      delete diff.items;
                     }
+                    delete diff.items;
+
+                    Helpers.logger.debug(`Updating object ${item}`, diff);
 
                     updatedData = Helpers.buildUpdateData(diff);
 
