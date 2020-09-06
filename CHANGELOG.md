@@ -1,3 +1,4 @@
+* 2020/09/05 - Bug Fix - Issue occured when updating references on an compendium actor's owned items if they don't have any.
 * 2020/09/04 - Bug Fix #90 - Export/Import now handles wildcard image randomizer.
 * 2020/09/02 - Enhancement - Removed UI Notification from file upload during import.
 * 2020/08/28 - Enhancement #73 - Added macro export/import.
