@@ -222,6 +222,14 @@ export default class AdventureModuleExport extends FormApplication {
               if(item?.token?.img) {
                 item.token.img = await Helpers.exportImage(item.token.img, type, item._id, zip);
               }
+
+              if(item?.items?.length)  {
+                // we need to export images associated to owned items.
+                await Helpers.asyncForEach(item.items, async i => {
+                  i.img = await Helpers.exportImage(i.img, type, item._id, zip);
+                });
+              }
+
               currentcount +=1;
               this._updateProgress(totalcount, currentcount);
             })
@@ -276,6 +284,12 @@ export default class AdventureModuleExport extends FormApplication {
             }
           } 
 
+          if(type === "actor" && exportData?.items?.length)  {
+            // we need to export images associated to owned items.
+            await Helpers.asyncForEach(exportData.items, async item => {
+              item.img = await Helpers.exportImage(item.img, type, id, zip);
+            });
+          }
 
           data = Helpers.exportToJSON(exportData)
         } 
