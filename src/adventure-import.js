@@ -516,6 +516,12 @@ export default class AdventureModuleImport extends FormApplication {
           item.token.img = await Helpers.importImage(item.token.img, zip, adventure);
         }
 
+        if(item?.items?.length) {
+          await Helpers.asyncForEach(data.items, async i => {
+            i.img = await Helpers.importImage(i.img, zip, adventure);
+          });
+        }
+
         switch(data.info.entity) {
           case "Item": 
             obj = new Item(item, {temporary: true});
@@ -625,6 +631,12 @@ export default class AdventureModuleImport extends FormApplication {
         } else {
           data.token.img = await Helpers.importImage(data.token.img, zip, adventure);
         }
+      }
+
+      if(data?.items?.length) {
+        await Helpers.asyncForEach(data.items, async item => {
+          item.img = await Helpers.importImage(item.img, zip, adventure);
+        });
       }
 
       if(typeName === "Playlist") {
