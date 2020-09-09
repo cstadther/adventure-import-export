@@ -223,6 +223,58 @@ export default class AdventureModuleImport extends FormApplication {
                     }
                     await obj.update(updatedData);
                     break;
+                  case "RollTable": 
+                    updatedData = {
+                      results : obj.results
+                    }
+                    await Helpers.asyncForEach(obj.results, async (result, index) => {
+                      switch (result.type) {
+                        case 1:
+                          let refType = "";
+                          switch(result.collection.toLowerCase()) {
+                            // this is a world obj, type denoted by collection 
+                            case "scene":
+                              refType = "scenes";
+                              break;
+                            case "journalentry":
+                              refType = "journal";
+                              break;
+                            case "rolltable":
+                              refType = "tables";
+                              break;
+                            case "actor":
+                              refType = "actors";
+                              break;
+                            case "item" :
+                              refType = "items";
+                              break;
+                          }
+                          let rolltableresultitem = Helpers.findEntityByImportId(refType, result.resultId);
+                          if(rolltableresultitem) {
+                            updatedData.results[index].resultId = rolltableresultitem?._id;
+                          }
+                          break;
+                        case 2:
+                          // this is a compendium obj, pack denoted by collection
+                          const pack = await game.packs.get(obj.data.collection);
+                          if(!pack.locked && !pack.private) {
+                            let content = await pack.getContent();
+                              
+                            let compendiumItem = content.find(contentItem => {
+                              return contentItem.data.flags.importid === obj.data.resultId;  
+                            });
+  
+                            if(compendiumItem) {
+                              updatedData.results[index].resultId = compendiumItem.data._id;
+                            } 
+                          } 
+                          break;
+                        default:
+                          // this is straight text
+                      }
+                    });
+                   
+                    break;
                   default:
                     // this is where there is reference in one of the fields
                     rawData = JSON.stringify(obj.data);
@@ -311,6 +363,8 @@ export default class AdventureModuleImport extends FormApplication {
                         let nonCompendiumItem = Helpers.findEntityByImportId(refType, p6);
                         if(nonCompendiumItem) {
                           newObj = nonCompendiumItem;
+                        } else {
+                          Helpers.logger.warn(`Unable to find item ${match} to fix link.`);
                         }
                       } else if (p4.toLowerCase() === "data-pack") {
                         try {
@@ -333,7 +387,7 @@ export default class AdventureModuleImport extends FormApplication {
                             } 
                           } 
                         } catch (err) {
-                          Helpers.logger.warn(`Unable to find find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
+                          Helpers.logger.warn(`Unable to find compendium item ${match} to fix link.  If the compendium referenced is part of the system, this warning can be ignored, otherwise please make sure compendiums are unlocked and visible during import.`, err);
                         }
 
                         console.log(`Replacing ${p6} with ${newObj._id} for ${p7}`);
@@ -462,6 +516,12 @@ export default class AdventureModuleImport extends FormApplication {
           item.token.img = await Helpers.importImage(item.token.img, zip, adventure);
         }
 
+        if(item?.items?.length) {
+          await Helpers.asyncForEach(data.items, async i => {
+            i.img = await Helpers.importImage(i.img, zip, adventure);
+          });
+        }
+
         switch(data.info.entity) {
           case "Item": 
             obj = new Item(item, {temporary: true});
@@ -573,6 +633,12 @@ export default class AdventureModuleImport extends FormApplication {
         }
       }
 
+      if(data?.items?.length) {
+        await Helpers.asyncForEach(data.items, async item => {
+          item.img = await Helpers.importImage(item.img, zip, adventure);
+        });
+      }
+
       if(typeName === "Playlist") {
         await Helpers.asyncForEach(data.sounds, async (sound) => {
           if(sound.path) {
@@ -585,11 +651,13 @@ export default class AdventureModuleImport extends FormApplication {
           if(result.img) {
             result.img = await Helpers.importImage(result.img, zip, adventure);
           }
+          if(result.resultId) {
+            needRevisit = true;
+          }
         })
       }
       
       data.flags.importid = data._id;
-
       
       if(typeName !== "Playlist" && typeName !== "Compendium") {
         if(CONFIG.AIE.TEMPORARY.folders[data.folder]) {
@@ -657,7 +725,10 @@ export default class AdventureModuleImport extends FormApplication {
         break;
         case "Table" : 
           if(!Helpers.findEntityByImportId("tables", data._id)) {
-            await RollTable.create(data);
+            let rolltable = await RollTable.create(data);
+            if(needRevisit) {
+              this._itemsToRevisit.push(`RollTable.${rolltable.data._id}`);
+            }
           }
         break;
         case "Playlist" : 
