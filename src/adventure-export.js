@@ -344,12 +344,11 @@ export default class AdventureModuleExport extends FormApplication {
     this._updateProgress(totalcount, currentcount, `building and preparing adventure file for download`);
 
     try {
-      // const base64 = await zip.generateAsync({type:"base64"});
-    
-      // const blob = "data:application/zip;base64," + base64;
       const blob = await zip.generateAsync({type:"blob"});
-      FileSaver.saveAs(blob, filename);
+      saveAs(blob, filename);
 
+      // const base64 = await zip.generateAsync({type:"base64"});
+      // const blob = "data:application/zip;base64," + base64;
       // let a = document.createElement('a');
       // a.href = blob;
       // a.download = filename;
