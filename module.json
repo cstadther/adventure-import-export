@@ -20,7 +20,8 @@
   ],
   "scripts": [
     "./lib/jszip/jszip-utils.min.js",
-    "./lib/jszip/jszip.min.js"
+    "./lib/jszip/jszip.min.js",
+    "./lib/FileSaver.min.js"
   ],
   "esmodules": [
     "./src/main.js"
