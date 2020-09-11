@@ -1,4 +1,5 @@
 import Helpers from "./common.js";
+
 export default class AdventureModuleExport extends FormApplication {
   /** @override */
   static get defaultOptions() {
@@ -342,15 +343,21 @@ export default class AdventureModuleExport extends FormApplication {
     Helpers.logger.log(`Building and preparing adventure file for download`)
     this._updateProgress(totalcount, currentcount, `building and preparing adventure file for download`);
 
-    const base64 = await zip.generateAsync({type:"base64"});
-    
-    const blob = "data:application/zip;base64," + base64;
+    try {
+      const blob = await zip.generateAsync({type:"blob"});
+      saveAs(blob, filename);
 
-    let a = document.createElement('a');
-    a.href = blob;
-    a.download = filename;
-    a.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, view: window}));
-    setTimeout(() => window.URL.revokeObjectURL(a.href), 100);
+      // const base64 = await zip.generateAsync({type:"base64"});
+      // const blob = "data:application/zip;base64," + base64;
+      // let a = document.createElement('a');
+      // a.href = blob;
+      // a.download = filename;
+      // a.dispatchEvent(new MouseEvent("click", {bubbles: true, cancelable: true, view: window}));
+      // setTimeout(() => window.URL.revokeObjectURL(a.href), 100);
+    } catch (err) {
+      Helpers.logger.error(err);
+    }
+    
     $(".aie-overlay").toggleClass("import-invalid");
 
     CONFIG.AIE.TEMPORARY = {};
