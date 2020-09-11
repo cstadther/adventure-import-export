@@ -518,7 +518,9 @@ export default class AdventureModuleImport extends FormApplication {
 
         if(item?.items?.length) {
           await Helpers.asyncForEach(data.items, async i => {
-            i.img = await Helpers.importImage(i.img, zip, adventure);
+            if(i.img) {
+              i.img = await Helpers.importImage(i.img, zip, adventure);
+            }
           });
         }
 
@@ -635,7 +637,9 @@ export default class AdventureModuleImport extends FormApplication {
 
       if(data?.items?.length) {
         await Helpers.asyncForEach(data.items, async item => {
-          item.img = await Helpers.importImage(item.img, zip, adventure);
+          if(item.img) {
+            item.img = await Helpers.importImage(item.img, zip, adventure);
+          }
         });
       }
 

@@ -1,3 +1,4 @@
+* 2020/09/11 - Bug Fix - Fixed issue with importing actor owned item images. Added additional logging.
 * 2020/09/09 - Bug Fix - Fixed issue where Actor's Owned Item images were not being exported correctly.
 * 2020/09/08 - Bug Fix - 0.7.x fix for Roll Table items reference updates.
 * 2020/09/05 - Bug Fix - Issue occured when updating references on an compendium actor's owned items if they don't have any.
