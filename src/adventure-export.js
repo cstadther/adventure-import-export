@@ -137,11 +137,11 @@ export default class AdventureModuleExport extends FormApplication {
       try {
         let obj;
         let data;
-  
         switch(type) {
           case "scene" :
             obj = await game.scenes.get(id);
-
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             const sceneData = JSON.parse(JSON.stringify(obj.data));
   
             totalcount += sceneData.tokens.length + sceneData.sounds.length + sceneData.notes.length + sceneData.tiles.length;
@@ -170,27 +170,34 @@ export default class AdventureModuleExport extends FormApplication {
             }
   
             data = Helpers.exportToJSON(sceneData);
-
+            
             break;
           case "actor" :
             obj = await game.actors.get(id);
-  
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             break;
           case "item" : 
             obj = await game.items.get(id);
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             break;
           case "journal":
             obj = await game.journal.get(id);
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             break;
           case "table" : 
             obj = await game.tables.get(id);
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             const tableData = JSON.parse(JSON.stringify(obj.data));
             totalcount += tableData.results.length;
   
             await Helpers.asyncForEach(tableData.results, async (result) => {
               result.img = await Helpers.exportImage(result.img, type, result._id, zip, "table");
               currentcount +=1;
-              this._updateProgress(totalcount, currentcount);
+              this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             });
   
             data = Helpers.exportToJSON(tableData)
@@ -199,17 +206,20 @@ export default class AdventureModuleExport extends FormApplication {
             obj = await game.playlists.get(id);
             const playlistData = JSON.parse(JSON.stringify(obj.data));
             totalcount += playlistData.sounds.length;
-  
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             await Helpers.asyncForEach(playlistData.sounds, async (sound) => {
               sound.path = await Helpers.exportImage(sound.path, type, sound._id, zip, "sounds");
               currentcount +=1;
-              this._updateProgress(totalcount, currentcount);
+              this._updateProgress(totalcount, currentcount, `${type}-${obj.name}-${sound.name}`);
             });
   
             data = Helpers.exportToJSON(playlistData)
             break;
           case "compendium" : 
             obj = await game.packs.get(id);
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`);
+            this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             let content = await obj.getContent();
             const compendiumData = JSON.parse(JSON.stringify(content));
             totalcount += compendiumData.length;
@@ -231,7 +241,7 @@ export default class AdventureModuleExport extends FormApplication {
               }
 
               currentcount +=1;
-              this._updateProgress(totalcount, currentcount);
+              this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
             })
             
             data = Helpers.exportToJSON({ info : obj.metadata,
@@ -241,6 +251,7 @@ export default class AdventureModuleExport extends FormApplication {
             break;
           case "macro":
             obj = await game.macros.get(id);
+            Helpers.logger.log(`Exporting ${type} : ${obj.name}`)
             break;
         }
         if(type !== "compendium" && type !== "playlist" && type !== "table" && type !== "scene") {
@@ -276,7 +287,7 @@ export default class AdventureModuleExport extends FormApplication {
               await Helpers.asyncForEach(filestoexport.files, async (file) => {
                 await Helpers.exportImage(file, type, id, zip, "token");  
                 currentcount += 1;
-                this._updateProgress(totalcount, currentcount);
+                this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
               });
 
             } else {
@@ -298,11 +309,13 @@ export default class AdventureModuleExport extends FormApplication {
         Helpers.logger.error(`Error during main export ${id} - ${type}`)
       }
       currentcount +=1;
-      this._updateProgress(totalcount, currentcount);
+      this._updateProgress(totalcount, currentcount, `${type}`);
     }
 
     let folderData = [];
 
+    Helpers.logger.log(`Exporting ${game.folders.length} folders`)
+    this._updateProgress(totalcount, currentcount, `folders`);
     await game.folders.forEach(folder => {
       let f = JSON.parse(JSON.stringify(folder.data));
       f.flags.importid = f._id;
@@ -310,7 +323,9 @@ export default class AdventureModuleExport extends FormApplication {
     })
 
     zip.file("folders.json", Helpers.exportToJSON(folderData));
-
+    
+    Helpers.logger.log(`Adventure Metadata`)
+    this._updateProgress(totalcount, currentcount, `adventure metadata`);
     const descriptor = {
       id: randomID(),
       name,
@@ -322,8 +337,10 @@ export default class AdventureModuleExport extends FormApplication {
         folders : $(".aie-exporter-window input[type='checkbox'][value='directories']:checked").length > 0 ? true : false
       }
     }
-
     zip.file("adventure.json", Helpers.exportToJSON(descriptor));
+    
+    Helpers.logger.log(`Building and preparing adventure file for download`)
+    this._updateProgress(totalcount, currentcount, `building and preparing adventure file for download`);
 
     const base64 = await zip.generateAsync({type:"base64"});
     
@@ -340,7 +357,7 @@ export default class AdventureModuleExport extends FormApplication {
     this.close();
   }
 
-  _updateProgress(total, count) {
-    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>${game.i18n.localize("AIE.Working")}...</span>`);
+  _updateProgress(total, count, type) {
+    $(".import-progress-bar").width(`${Math.trunc((count / total) * 100)}%`).html(`<span>${game.i18n.localize("AIE.Working")}(${type})...</span>`);
   }
 }

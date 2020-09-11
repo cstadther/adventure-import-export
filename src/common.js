@@ -343,7 +343,7 @@ export default class Helpers {
       console.warn(`${CONFIG.AIE.module} | `, ...args);
     },
     error: (...args) => {
-      console.error(`${CONFIG.module} | `, ...args);
+      console.error(`${CONFIG.module} | `, ...args, new Error().stack);
     }
   }
 
