@@ -17,5 +17,9 @@
   "AIE.Export"        : "Exportar Assets",
   "AIE.Import"        : "Importar Aventura",
   "AIE.Working"       : "Executando",
-  "AIE.ActiveModules" : "OS Seguintes módulos estão ativos:"
+  "AIE.ActiveModules" : "Os seguintes módulos estão ativos:",
+  "AIE.ExportOptions" : "Opções de exportação",
+  "AIE.References"    : "Atualizando referências",
+  "AIE.RollTable"     : "Tabela de Rolagens",
+  "AIE.Macros"        : "Macros"
 }
