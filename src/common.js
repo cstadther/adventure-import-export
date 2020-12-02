@@ -17,7 +17,7 @@ export default class Helpers {
           if(currentSource !== paths[i]) {
             currentSource = `${currentSource}/${paths[i]}`; 
           }
-          await FilePicker.createDirectory(startingSource, `${currentSource}`, {bucket:null});
+          await Helpers.CreateDirectory(startingSource,`${currentSource}`, {bucket:null});
           
         } catch (err) {
           Helpers.logger.debug(`Error trying to verify path ${startingSource}, ${path}`, err);
@@ -315,6 +315,10 @@ export default class Helpers {
    * @param  {object} options
    */
   static async UploadFile(source, path, file, options) {
+    if (typeof ForgeVTT !== "undefined" && ForgeVTT?.usingTheForge) {
+      return Helpers.ForgeUploadFile("forgevtt", path, file, options);
+    }
+
     const fd = new FormData();
     fd.set("source", source);
     fd.set("target", path);
@@ -329,6 +333,94 @@ export default class Helpers {
     }
   }
 
+  /**
+   * Uploads a file to Forge Asset Library without the UI Notification
+   * @param  {string} source
+   * @param  {string} path
+   * @param  {blog} file
+   * @param  {object} options
+   */
+  static async ForgeUploadFile(source, path, file, options) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("path", `${path}/${file.name}`);
+
+    const response = await ForgeAPI.call("assets/upload", fd);
+    if (!response || response.error) {
+      ui.notifications.error(response ? response.error : "An unknown error occured accessing The Forge API");
+      return false;
+    } else {
+      return { path: response.url };
+    }
+  }
+
+  /**
+   * Browse files using FilePicker
+   * @param  {string} source
+   * @param  {string} target
+   * @param  {object} options={}
+   */
+  static async BrowseFiles(source, target, options = {}) {
+    if (typeof ForgeVTT !== "undefined" && ForgeVTT?.usingTheForge) {
+      if (target.startsWith(ForgeVTT.ASSETS_LIBRARY_URL_PREFIX)) source = "forgevtt";
+
+      if( source === "forgevtt" ) {
+        return Helpers.BrowseForgeFiles(source, target, options);
+      }
+    }
+
+    return FilePicker.browse(source, target, options);
+  }
+
+  /**
+   * Browse files using Forge API
+   * @param  {string} source
+   * @param  {string} target
+   * @param  {object} options={}
+   */
+  static async BrowseForgeFiles(source, target, options = {}) {
+    if (target.startsWith(ForgeVTT.ASSETS_LIBRARY_URL_PREFIX)) {
+      if (options.wildcard)
+          options.wildcard = target;
+      target = target.slice(ForgeVTT.ASSETS_LIBRARY_URL_PREFIX.length)
+      target = target.split("/").slice(1, -1).join("/") // Remove userid from url to get target path
+    }
+
+    const response = await ForgeAPI.call('assets/browse', { path: decodeURIComponent(target), options });
+    if (!response || response.error) {
+        ui.notifications.error(response ? response.error : "An unknown error occured accessing The Forge API");
+        return { target, dirs: [], files: [], gridSize: null, private: false, privateDirs: [], extensions: options.extensions }
+    }
+    // TODO: Should be decodeURIComponent but FilePicker's _onPick needs to do encodeURIComponent too, but on each separate path.
+    response.target = decodeURI(response.folder);
+    delete response.folder;
+    response.dirs = response.dirs.map(d => d.path.slice(0, -1));
+    response.files = response.files.map(f => f.url);
+    // 0.5.6 specific
+    response.private = true;
+    response.privateDirs = [];
+    response.gridSize = null;
+    response.extensions = options.extensions;
+    return response;
+  }
+  /**
+   * @param  {string} source
+   * @param  {string} target
+   * @param  {object} options={}
+   */
+  static async CreateDirectory(source, target, options = {}) {
+    if (typeof ForgeVTT !== "undefined" && ForgeVTT?.usingTheForge) {
+      return Helpers.ForgeCreateDirectory("forgevtt", target, options);
+    }
+    return FilePicker.createDirectory(source, target, options);
+  }
+
+  static async ForgeCreateDirectory(source, target, options = {}) {
+    if (!target) return;
+    const response = await ForgeAPI.call('assets/new-folder', { path: target });
+    if (!response || response.error)
+      throw new Error(response ? response.error : "Unknown error while creating directory.");
+  }
 
   /** LOGGER */
 
