@@ -21,7 +21,7 @@ export default class AdventureModuleImport extends FormApplication {
 
     try {
       if (Helpers.verifyPath("data", importpath)) {
-        data = await FilePicker.browse("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false});
+        data = await Helpers.BrowseFiles("data", importpath, {bucket:null, extensions: [".fvttadv", ".FVTTADV"], wildcard: false})
         files = data.files.map(file => {
           const filename = decodeURIComponent(file).replace(/^.*[\\\/]/, '')
 
