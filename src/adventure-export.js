@@ -278,7 +278,7 @@ export default class AdventureModuleExport extends FormApplication {
                   extensions.push(imgFilename.replace("*.", "."));
                 }
               }
-              const filestoexport = await FilePicker.browse("data", exportData.token.img, {bucket:null, extensions, wildcard});
+              const filestoexport = Helpers.BrowseFiles("data", exportData.token.img, {bucket:null, extensions, wildcard});
               Helpers.logger.debug(`Found wildcard token image for ${exportData.name}, uploading ${filestoexport.files.length} files`);
 
               exportData.token.img = `${type}/token/${id}/${imgFilename}`;
