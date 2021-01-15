@@ -2,7 +2,7 @@
   "name": "adventure-import-export",
   "title": "Adventure Importer / Exporter",
   "description": "Allows import and export of adventures (including all Foundry VTT Assets).",
-  "version": "0.6.0",
+  "version": "beta_0.6.0",
   "author": "Chris Stadther",
   "minimumCoreVersion": "0.6.0",
   "compatibleCoreVersion": "0.7.9",
