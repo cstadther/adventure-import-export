@@ -3,7 +3,7 @@ export default class AdventureModuleImport extends FormApplication {
   /** @override */
   static get defaultOptions() {
     this.pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-    this.altpattern = /((data-entity)="([a-zA-Z]*)"|(data-pack)="([[\S\.]*)") data-id="([a-zA-z0-9]*)">(.*)<\/a>/gmi
+    this.altpattern = /((data-entity)=\\?\"([a-zA-Z]*)\\?\"|(data-pack)=\\?\"([[\S\.]*)\\?\") data-id=\\?\"([a-zA-z0-9]*)\\?\">(.*?)<\/a>/gmi
 
     return mergeObject(super.defaultOptions, {
       id: "adventure-import",
@@ -278,9 +278,6 @@ export default class AdventureModuleImport extends FormApplication {
                   default:
                     // this is where there is reference in one of the fields
                     rawData = JSON.stringify(obj.data);
-                    const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-                    const altpattern = /((data-entity)="([a-zA-Z]*)"|(data-pack)="([[\S\.]*)") data-id="([a-zA-z0-9]*)">(.*)<\/a>/gmi
-                    
                     const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
                       let refType;
                       switch(p1.replace(/\@/, "").toLowerCase()) {
@@ -394,9 +391,9 @@ export default class AdventureModuleImport extends FormApplication {
                         return [p1, " data-id='", newObj._id, "'>", p7, "</a>"].join("");
                       }
                     }
-    
-                    const updatedRawData = await Helpers.replaceAsync(rawData, pattern, referenceUpdater);
-                    const secondPassRawData = await Helpers.replaceAsync(updatedRawData, altpattern, altReferenceUpdater);
+
+                    const updatedRawData = await Helpers.replaceAsync(rawData, this.pattern, referenceUpdater);
+                    const secondPassRawData = await Helpers.replaceAsync(updatedRawData, this.altpattern, altReferenceUpdater);
                     const updatedDataUpdates = JSON.parse(secondPassRawData);
                     const diff = Helpers.diff(obj.data, updatedDataUpdates);
                     
