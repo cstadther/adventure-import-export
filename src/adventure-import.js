@@ -392,7 +392,6 @@ export default class AdventureModuleImport extends FormApplication {
 
                         console.log(`Replacing ${p6} with ${newObj._id} for ${p7}`);
                       }
-                      // return [p1, " data-id=\"", newObj._id, "\">", p7, "</a>"].join("");
                       return [p1, " data-id='", newObj._id, "'>", p7, "</a>"].join("");
                     }
 
