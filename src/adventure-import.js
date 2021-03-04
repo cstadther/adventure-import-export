@@ -3,7 +3,7 @@ export default class AdventureModuleImport extends FormApplication {
   /** @override */
   static get defaultOptions() {
     this.pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-    this.altpattern = /((data-entity)=\\?\"?([a-zA-Z]*)\\?\"?|(data-pack)=\\?\"?([[\S\.]*)\\?\"?) data-id=\\?\"?([a-zA-z0-9]*)\\?\"?\s*?>(.*?)<\/a>/gmi
+    this.altpattern = /((data-entity)=\\?[\"']?([a-zA-Z]*)\\?[\"']?|(data-pack)=\\?[\"']?([[\S\.]*)\\?[\"']?) data-id=\\?[\"']?([a-zA-Z0-9]*)\\?[\"']?.*?>(.*?)<\/a>/gmi
 
     return mergeObject(super.defaultOptions, {
       id: "adventure-import",
@@ -279,7 +279,7 @@ export default class AdventureModuleImport extends FormApplication {
                     // this is where there is reference in one of the fields
                     rawData = JSON.stringify(obj.data);
                     const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-                    const altpattern = /((data-entity)=\\?\"?([a-zA-Z]*)\\?\"?|(data-pack)=\\?\"?([[\S\.]*)\\?\"?) data-id=\\?\"?([a-zA-z0-9]*)\\?\"?\s*?>(.*?)<\/a>/gmi
+                    const altpattern = /((data-entity)=\\?[\"']?([a-zA-Z]*)\\?[\"']?|(data-pack)=\\?[\"']?([[\S\.]*)\\?[\"']?) data-id=\\?[\"']?([a-zA-Z0-9]*)\\?[\"']?.*?>(.*?)<\/a>/gmi
 
                     const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
                       let refType;
@@ -392,6 +392,7 @@ export default class AdventureModuleImport extends FormApplication {
 
                         console.log(`Replacing ${p6} with ${newObj._id} for ${p7}`);
                       }
+                      // return [p1, " data-id=\"", newObj._id, "\">", p7, "</a>"].join("");
                       return [p1, " data-id='", newObj._id, "'>", p7, "</a>"].join("");
                     }
 
