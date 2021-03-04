@@ -264,33 +264,36 @@ export default class AdventureModuleExport extends FormApplication {
           }
           if(exportData?.token?.img) {
             if(exportData?.token?.randomImg) {
-              // we need to grab all images that match the string.
-              const imgFilepaths = exportData.token.img.split("/");
-              const imgFilename = (imgFilepaths.reverse())[0];
-              const imgFilepath = exportData.token.img.replace(imgFilename, "");
+              // If it starts with http, we can't browse an http URL as a directory so just skip this
+              if (!exportData.token.img.startsWith("http"))
+              {
+                // we need to grab all images that match the string.
+                const imgFilepaths = exportData.token.img.split("/");
+                const imgFilename = (imgFilepaths.reverse())[0];
+                const imgFilepath = exportData.token.img.replace(imgFilename, "");
 
-              let wildcard = false;
-              let extensions = [];
-              if(imgFilename.includes("*")) {
-                wildcard = true;
-                if(imgFilename.includes("*.")) {
+                let wildcard = false;
+                let extensions = [];
+                if(imgFilename.includes("*")) {
+                  wildcard = true;
+                  if(imgFilename.includes("*.")) {
 
-                  extensions.push(imgFilename.replace("*.", "."));
+                    extensions.push(imgFilename.replace("*.", "."));
+                  }
                 }
+                const filestoexport = Helpers.BrowseFiles("data", exportData.token.img, {bucket:null, extensions, wildcard});
+                Helpers.logger.debug(`Found wildcard token image for ${exportData.name}, uploading ${filestoexport.files.length} files`);
+
+                exportData.token.img = `${type}/token/${id}/${imgFilename}`;
+
+                totalcount += filestoexport.files.length;
+
+                await Helpers.asyncForEach(filestoexport.files, async (file) => {
+                  await Helpers.exportImage(file, type, id, zip, "token");  
+                  currentcount += 1;
+                  this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
+                });
               }
-              const filestoexport = Helpers.BrowseFiles("data", exportData.token.img, {bucket:null, extensions, wildcard});
-              Helpers.logger.debug(`Found wildcard token image for ${exportData.name}, uploading ${filestoexport.files.length} files`);
-
-              exportData.token.img = `${type}/token/${id}/${imgFilename}`;
-
-              totalcount += filestoexport.files.length;
-
-              await Helpers.asyncForEach(filestoexport.files, async (file) => {
-                await Helpers.exportImage(file, type, id, zip, "token");  
-                currentcount += 1;
-                this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
-              });
-
             } else {
               exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");  
             }
