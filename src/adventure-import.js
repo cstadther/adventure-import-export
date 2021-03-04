@@ -280,7 +280,6 @@ export default class AdventureModuleImport extends FormApplication {
                     rawData = JSON.stringify(obj.data);
                     const pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
                     const altpattern = /((data-entity)=\\?\"?([a-zA-Z]*)\\?\"?|(data-pack)=\\?\"?([[\S\.]*)\\?\"?) data-id=\\?\"?([a-zA-z0-9]*)\\?\"?\s*?>(.*?)<\/a>/gmi
-
                     const referenceUpdater = async (match, p1, p2, p3, p4, p5, p6, p7, offset, string) => {
                       let refType;
                       switch(p1.replace(/\@/, "").toLowerCase()) {
