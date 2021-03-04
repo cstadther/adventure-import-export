@@ -3,7 +3,7 @@ export default class AdventureModuleImport extends FormApplication {
   /** @override */
   static get defaultOptions() {
     this.pattern = /(\@[a-z]*)(\[)([a-z0-9]*|[a-z0-9\.]*)(\])(\{)(.*?)(\})/gmi
-    this.altpattern = /((data-entity)=\\?\"([a-zA-Z]*)\\?\"|(data-pack)=\\?\"([[\S\.]*)\\?\") data-id=\\?\"([a-zA-z0-9]*)\\?\">(.*?)<\/a>/gmi
+    this.altpattern = /((data-entity)=\\?\"?([a-zA-Z]*)\\?\"?|(data-pack)=\\?\"?([[\S\.]*)\\?\"?) data-id=\\?\"?([a-zA-z0-9]*)\\?\"?\s*?>(.*?)<\/a>/gmi
 
     return mergeObject(super.defaultOptions, {
       id: "adventure-import",
