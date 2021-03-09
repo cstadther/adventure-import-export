@@ -338,7 +338,6 @@ export default class AdventureModuleExport extends FormApplication {
     const descriptor = {
       id: randomID(),
       name,
-
       description : $("#adventure_description").val(),
       system : game.data.system.data.name,
       modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title }),
