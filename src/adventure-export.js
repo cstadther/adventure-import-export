@@ -294,6 +294,11 @@ export default class AdventureModuleExport extends FormApplication {
                   this._updateProgress(totalcount, currentcount, `${type}-${obj.name}`);
                 });
               }
+              else {
+                // We cannot support random images for remote URLs to just default to what the avatar image is since this will be 
+                // better than no token image at all!
+                exportData.token.img = exportData.img;
+              }
             } else {
               exportData.token.img = await Helpers.exportImage(exportData.token.img, type, id, zip, "token");  
             }
@@ -333,6 +338,7 @@ export default class AdventureModuleExport extends FormApplication {
     const descriptor = {
       id: randomID(),
       name,
+
       description : $("#adventure_description").val(),
       system : game.data.system.data.name,
       modules : game.data.modules.filter(module => { return module.active; }).map(module => { return module.data.title }),
