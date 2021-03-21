@@ -124,7 +124,7 @@ export default class Helpers {
         const targetPath = path.replace(/[\\\/][^\\\/]+$/, '');
         const filename = path.replace(/^.*[\\\/]/, '').replace(/\?(.*)/, '');
         
-        if(!CONFIG.AIE.TEMPORARY.import[path]) {         
+        if(!CONFIG.AIE.TEMPORARY.import[path]) {
           await Helpers.verifyPath("data", `worlds/${game.world.name}/adventures/${adventurePath}/${targetPath}`);
           const img = await zip.file(path).async("uint8array");
           const i = new File([img], filename);
@@ -306,6 +306,26 @@ export default class Helpers {
         await this.importFolder(newfolder, childFolders, adventure, folderList);
       } 
     });
+  }
+
+  /**
+   * Replaces matchAll as it's not yet available in Electron App
+   * @param   {string} regex  RegEx to use
+   * @param   {string} string String to match on
+   * @returns {Array}
+   */
+  static reMatchAll(regexp, string) {
+    const matches = string.match(new RegExp(regexp, "gm"));
+    if (matches) {
+        let start = 0;
+        return matches.map((group0) => {
+            const match = group0.match(regexp);
+            match.index = string.indexOf(group0, start);
+            start = match.index;
+            return match;
+        });
+    }
+    return matches;
   }
 
   /**

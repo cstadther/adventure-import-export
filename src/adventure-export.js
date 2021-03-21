@@ -304,6 +304,17 @@ export default class AdventureModuleExport extends FormApplication {
             }
           } 
 
+          if (type === "journal" && exportData?.content) {
+            console.log("Yup")
+            const journalImages = Helpers.reMatchAll(/(src|href)="(?!http(?:s*):\/\/)([\w0-9\-._~%!$&'()*+,;=:@/]*)"/, exportData.content);
+            if (journalImages) {
+              await Helpers.asyncForEach(journalImages, async (result) => {
+                const path = await Helpers.exportImage(result[2], type, id, zip);
+                exportData.content = exportData.content.replace(result[0], `${result[1]}="${path}"`);
+              })
+            }
+          }
+
           if(type === "actor" && exportData?.items?.length)  {
             // we need to export images associated to owned items.
             await Helpers.asyncForEach(exportData.items, async item => {

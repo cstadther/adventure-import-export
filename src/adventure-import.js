@@ -660,7 +660,16 @@ export default class AdventureModuleImport extends FormApplication {
           }
         })
       }
-      
+      if(typeName === "Journal" && data.content) {
+        const journalImages = Helpers.reMatchAll(/(src|href)="(?!http(?:s*):\/\/)([\w0-9\-._~%!$&'()*+,;=:@/]*)"/, data.content);
+        if (journalImages) {
+          await Helpers.asyncForEach(journalImages, async (result) => {
+            const path = await Helpers.importImage(result[2], zip, adventure);
+            data.content = data.content.replace(result[0], `${result[1]}="${path}"`);
+          })
+        }
+      }
+
       data.flags.importid = data._id;
       
       if(typeName !== "Playlist" && typeName !== "Compendium") {
