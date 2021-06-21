@@ -194,14 +194,14 @@ export default class AdventureModuleImport extends FormApplication {
                 const obj = await fromUuid(item);
                 let rawData;
                 let updatedData = {};
-                switch (obj.entity) {
+                switch (obj.documentName) {
                   case "Scene":
                     // this is a scene we need to update links to all items 
                     await Helpers.asyncForEach(obj.data.tokens, async token => {
                       if(token.actorId) {
                         const actor = Helpers.findEntityByImportId("actors", token.actorId);
                         if(actor) {
-                          await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                          await obj.update("Token", {_id: token._id, actorId : actor._id});
                         }
                       }
                     });
@@ -209,7 +209,7 @@ export default class AdventureModuleImport extends FormApplication {
                       if(note.entryId) {
                         const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
                         if(journalentry) {
-                          await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                          await obj.update("Note", {_id: note._id, entryId : journalentry._id});
                         }
                       }
                     });
@@ -400,7 +400,7 @@ export default class AdventureModuleImport extends FormApplication {
                     const updatedDataUpdates = JSON.parse(secondPassRawData);
                     const diff = Helpers.diff(obj.data, updatedDataUpdates);
                     
-                    if(diff.items && obj.entity === "Actor" && diff.items.length > 0) {
+                    if(diff.items && obj.documentName === "Actor" && diff.items.length > 0) {
                       // the object has embedded items that need to be updated seperately.
 
                       for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
@@ -409,7 +409,7 @@ export default class AdventureModuleImport extends FormApplication {
 
                           if(Object.keys(itemUpdateDate).length > 0) {
                             Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
-                            await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+                            await obj.update("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
                           }
                         }
                       }
