@@ -669,7 +669,7 @@ export default class AdventureModuleImport extends FormApplication {
           })
         }
       }
-
+      
       data.flags.importid = data._id;
       
       if(typeName !== "Playlist" && typeName !== "Compendium") {
