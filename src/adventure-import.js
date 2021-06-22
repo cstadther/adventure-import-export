@@ -409,7 +409,7 @@ export default class AdventureModuleImport extends FormApplication {
 
                           if(Object.keys(itemUpdateDate).length > 0) {
                             Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
-                            await obj.update("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+                            await obj.updateEmbeddedDocuments("OwnedItem", [{_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate }]);
                           }
                         }
                       }
