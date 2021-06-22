@@ -201,7 +201,7 @@ export default class AdventureModuleImport extends FormApplication {
                       if(token.data.actorId) {
                         const actor = Helpers.findEntityByImportId("actors", token.data.actorId);
                         if(actor) {
-                          await obj.updateEmbeddedDocuments("Token", [{_id: token._id, actorId : actor._id}]);
+                          await obj.updateEmbeddedDocuments("Token", [{_id: token.id, actorId : actor._id}]);
                         }
                       }
                     });
@@ -209,7 +209,7 @@ export default class AdventureModuleImport extends FormApplication {
                       if(note.data.entryId) {
                         const journalentry = Helpers.findEntityByImportId("journal", note.data.entryId);
                         if(journalentry) {
-                          await obj.updateEmbeddedDocuments("Note", [{_id: note._id, entryId : journalentry._id}]);
+                          await obj.updateEmbeddedDocuments("Note", [{_id: note.id, entryId : journalentry._id}]);
                         }
                       }
                     });
