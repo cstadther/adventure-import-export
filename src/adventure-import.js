@@ -197,19 +197,19 @@ export default class AdventureModuleImport extends FormApplication {
                 switch (obj.documentName) {
                   case "Scene":
                     // this is a scene we need to update links to all items 
-                    await Helpers.asyncForEach(obj.data.tokens, async token => {
-                      if(token.actorId) {
-                        const actor = Helpers.findEntityByImportId("actors", token.actorId);
+                    await Helpers.asyncForEach(obj.data.tokens.contents, async token => {
+                      if(token.data.actorId) {
+                        const actor = Helpers.findEntityByImportId("actors", token.data.actorId);
                         if(actor) {
-                          await obj.update("Token", {_id: token._id, actorId : actor._id});
+                          await obj.updateEmbeddedDocuments("Token", [{_id: token._id, actorId : actor._id}]);
                         }
                       }
                     });
-                    await Helpers.asyncForEach(obj.data.notes, async note => {
-                      if(note.entryId) {
-                        const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
+                    await Helpers.asyncForEach(obj.data.notes.contents, async note => {
+                      if(note.data.entryId) {
+                        const journalentry = Helpers.findEntityByImportId("journal", note.data.entryId);
                         if(journalentry) {
-                          await obj.update("Note", {_id: note._id, entryId : journalentry._id});
+                          await obj.updateEmbeddedDocuments("Note", [{_id: note._id, entryId : journalentry._id}]);
                         }
                       }
                     });
@@ -714,7 +714,7 @@ export default class AdventureModuleImport extends FormApplication {
         case "Actor" : 
           if(!Helpers.findEntityByImportId("actors", data._id)) {
             let actor = await Actor.create(data);
-            await actor.update({[`data.token.actorId`] : actor.data._id})
+            await actor.update({[`data.token.data.actorId`] : actor.data._id})
             if(needRevisit) {
               this._itemsToRevisit.push(`Actor.${actor.data._id}`);
             }
