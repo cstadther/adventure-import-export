@@ -194,22 +194,22 @@ export default class AdventureModuleImport extends FormApplication {
                 const obj = await fromUuid(item);
                 let rawData;
                 let updatedData = {};
-                switch (obj.entity) {
+                switch (obj.documentName) {
                   case "Scene":
                     // this is a scene we need to update links to all items 
-                    await Helpers.asyncForEach(obj.data.tokens, async token => {
-                      if(token.actorId) {
-                        const actor = Helpers.findEntityByImportId("actors", token.actorId);
+                    await Helpers.asyncForEach(obj.data.tokens.contents, async token => {
+                      if(token.data.actorId) {
+                        const actor = Helpers.findEntityByImportId("actors", token.data.actorId);
                         if(actor) {
-                          await obj.updateEmbeddedEntity("Token", {_id: token._id, actorId : actor._id});
+                          await obj.updateEmbeddedDocuments("Token", [{_id: token.id, actorId : actor._id}]);
                         }
                       }
                     });
-                    await Helpers.asyncForEach(obj.data.notes, async note => {
-                      if(note.entryId) {
-                        const journalentry = Helpers.findEntityByImportId("journal", note.entryId);
+                    await Helpers.asyncForEach(obj.data.notes.contents, async note => {
+                      if(note.data.entryId) {
+                        const journalentry = Helpers.findEntityByImportId("journal", note.data.entryId);
                         if(journalentry) {
-                          await obj.updateEmbeddedEntity("Note", {_id: note._id, entryId : journalentry._id});
+                          await obj.updateEmbeddedDocuments("Note", [{_id: note.id, entryId : journalentry._id}]);
                         }
                       }
                     });
@@ -400,7 +400,7 @@ export default class AdventureModuleImport extends FormApplication {
                     const updatedDataUpdates = JSON.parse(secondPassRawData);
                     const diff = Helpers.diff(obj.data, updatedDataUpdates);
                     
-                    if(diff.items && obj.entity === "Actor" && diff.items.length > 0) {
+                    if(diff.items && obj.documentName === "Actor" && diff.items.length > 0) {
                       // the object has embedded items that need to be updated seperately.
 
                       for(let i = 0; i < updatedDataUpdates.items.length; i+=1) {
@@ -409,7 +409,7 @@ export default class AdventureModuleImport extends FormApplication {
 
                           if(Object.keys(itemUpdateDate).length > 0) {
                             Helpers.logger.debug(`Updating Owned item ${updatedDataUpdates.items[i]._id} for ${item} with: `, itemUpdateDate)
-                            await obj.updateEmbeddedEntity("OwnedItem", {_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate });
+                            await obj.updateEmbeddedDocuments("OwnedItem", [{_id: updatedDataUpdates.items[i]._id, ...itemUpdateDate }]);
                           }
                         }
                       }
@@ -714,7 +714,7 @@ export default class AdventureModuleImport extends FormApplication {
         case "Actor" : 
           if(!Helpers.findEntityByImportId("actors", data._id)) {
             let actor = await Actor.create(data);
-            await actor.update({[`data.token.actorId`] : actor.data._id})
+            await actor.update({[`data.token.data.actorId`] : actor.data._id})
             if(needRevisit) {
               this._itemsToRevisit.push(`Actor.${actor.data._id}`);
             }
